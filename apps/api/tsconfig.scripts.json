@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2022",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strict": true,
+    "outDir": "../../dist/out-tsc/api-scripts",
+    "types": ["node"],
+    "baseUrl": "../../",
+    "paths": {
+      "@oscar-vyent/contracts": ["libs/contracts/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "../../libs/contracts/src/**/*.ts"]
+}

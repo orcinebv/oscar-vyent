@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+tmp/
+out-tsc/
+*.tgz
+
+# Environment files — never commit secrets
+.env
+.env.local
+.env.*.local
+apps/api/.env
+apps/web/.env
+
+# Nx cache
+.nx/cache
+.nx/workspace-data
+
+# Test coverage
+coverage/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# TypeORM
+*.js.map
+
+# Logs
+*.log
+logs/
+
+# Angular cache
+.angular/cache

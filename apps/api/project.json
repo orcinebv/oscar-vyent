@@ -1,0 +1,85 @@
+{
+  "name": "api",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api/src",
+  "projectType": "application",
+  "tags": [
+    "type:app",
+    "scope:api"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "dependsOn": ["^build"],
+      "options": {
+        "outputPath": "dist/apps/api",
+        "main": "apps/api/src/main.ts",
+        "tsConfig": "apps/api/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": ".env",
+            "input": "apps/api",
+            "output": "."
+          }
+        ]
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node_modules/.bin/ts-node --transpile-only --project apps/api/tsconfig.app.json apps/api/src/main.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": [
+        "{workspaceRoot}/coverage/apps/api"
+      ],
+      "options": {
+        "jestConfig": "apps/api/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "apps/api/**/*.ts"
+        ]
+      }
+    },
+    "migration:run": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:run -d apps/api/src/app/database/data-source.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "migration:generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:generate apps/api/src/app/database/migrations/Migration -d apps/api/src/app/database/data-source.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "migration:revert": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:revert -d apps/api/src/app/database/data-source.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "seed": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register apps/api/src/app/database/seeders/run-seed.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}

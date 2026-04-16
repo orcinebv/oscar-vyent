@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc/web",
+    "types": [],
+    "baseUrl": "../../",
+    "paths": {
+      "@oscar-vyent/contracts": [
+        "libs/contracts/src/index.ts"
+      ]
+    },
+    "moduleResolution": "bundler"
+  },
+  "files": [
+    "src/main.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts"
+  ]
+}
