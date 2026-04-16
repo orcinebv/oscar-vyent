@@ -86,7 +86,7 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
       color: var(--color-text-secondary);
       margin-bottom: var(--space-8);
     }
-    .breadcrumb a { color: var(--color-primary-light); text-decoration: none; }
+    .breadcrumb a { color: var(--color-accent); text-decoration: none; }
     .breadcrumb a:hover { text-decoration: underline; }
 
     .detail {

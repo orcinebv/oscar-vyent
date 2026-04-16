@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CurrencyPipe } from '@angular/common';
+import {CurrencyPipe, JsonPipe} from '@angular/common';
 import { ProductDto } from '@oscar-vyent/contracts';
 
 @Component({
@@ -125,13 +125,15 @@ import { ProductDto } from '@oscar-vyent/contracts';
       position: absolute;
       top: var(--space-3);
       left: var(--space-3);
-      background: rgba(27, 58, 92, 0.85);
+      background: rgba(0, 0, 0, 0.82);
       color: white;
       padding: var(--space-1) var(--space-2);
       border-radius: var(--radius-sm);
       font-size: var(--font-size-xs);
       font-weight: var(--font-weight-medium);
       backdrop-filter: blur(4px);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .product-card__body {

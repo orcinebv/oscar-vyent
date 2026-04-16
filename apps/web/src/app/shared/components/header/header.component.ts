@@ -10,8 +10,7 @@ import { CartService } from '../../../core/services/cart.service';
     <header class="header" role="banner">
       <div class="container header__inner">
         <a routerLink="/products" class="header__logo" aria-label="Oscar Vyent — naar startpagina">
-          <span class="header__logo-mark">OV</span>
-          <span class="header__logo-name">Oscar Vyent</span>
+          <img src="/assets/logo.jpg" alt="Oscar Vyent" class="header__logo-img" />
         </a>
 
         <nav class="header__nav" role="navigation" aria-label="Hoofdmenu">
@@ -63,24 +62,11 @@ import { CartService } from '../../../core/services/cart.service';
       flex-shrink: 0;
     }
 
-    .header__logo-mark {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 36px;
-      height: 36px;
-      background: var(--color-primary);
-      color: white;
-      border-radius: var(--radius-md);
-      font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-bold);
-      letter-spacing: 0.05em;
-    }
-
-    .header__logo-name {
-      font-size: var(--font-size-lg);
-      font-weight: var(--font-weight-bold);
-      color: var(--color-primary);
+    .header__logo-img {
+      height: 56px;
+      width: auto;
+      display: block;
+      object-fit: contain;
     }
 
     .header__nav {
@@ -92,17 +78,19 @@ import { CartService } from '../../../core/services/cart.service';
 
     .header__nav-link {
       font-size: var(--font-size-sm);
-      font-weight: var(--font-weight-medium);
-      color: var(--color-text-secondary);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-primary);
       text-decoration: none;
       padding: var(--space-1) var(--space-2);
       border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       transition: color var(--transition-fast), background-color var(--transition-fast);
     }
 
     .header__nav-link:hover,
     .header__nav-link.active {
-      color: var(--color-primary);
+      color: var(--color-accent);
       background-color: var(--color-surface-subtle);
       text-decoration: none;
     }

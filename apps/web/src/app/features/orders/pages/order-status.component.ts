@@ -147,7 +147,7 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
     .progress-step__dot { width: 10px; height: 10px; border-radius: 50%; background: var(--color-border); flex-shrink: 0; }
     .progress-step--done .progress-step__dot { background: var(--color-success); }
     .progress-step--done { color: var(--color-text-secondary); }
-    .progress-step--active .progress-step__dot { background: var(--color-primary); box-shadow: 0 0 0 3px rgba(27,58,92,0.2); }
+    .progress-step--active .progress-step__dot { background: var(--color-primary); box-shadow: 0 0 0 3px rgba(250,179,62,0.3); }
     .progress-step--active { color: var(--color-primary); font-weight: var(--font-weight-semibold); }
 
     .order-footer { margin-top: var(--space-8); }
