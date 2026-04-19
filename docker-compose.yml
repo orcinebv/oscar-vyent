@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: oscar_vyent
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     ports:
       - "5432:5432"
     volumes:
