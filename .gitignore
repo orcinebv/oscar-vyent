@@ -38,3 +38,6 @@ logs/
 
 # Angular cache
 .angular/cache
+
+.claude/worktrees
+.claude/settings.local.json

@@ -32,6 +32,10 @@ export class CartService {
   readonly total = computed(() =>
     this._items().reduce((sum, i) => sum + i.product.price * i.quantity, 0),
   );
+  /** BTW 21% component (prijzen zijn incl. BTW): totaal * 21 / 121 */
+  readonly vatAmount = computed(() => this.total() * 21 / 121);
+  /** Subtotaal excl. BTW */
+  readonly subtotalExclVat = computed(() => this.total() / 1.21);
   readonly isEmpty = computed(() => this._items().length === 0);
 
   constructor() {

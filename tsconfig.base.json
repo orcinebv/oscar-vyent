@@ -15,7 +15,7 @@
     "baseUrl": ".",
     "strict": true,
     "paths": {
-      "@oscar-vyent/contracts": ["libs/contracts/src/index.ts"]
+      "@oscar-vyent/contracts": ["dist/libs/contracts/src/index.d.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

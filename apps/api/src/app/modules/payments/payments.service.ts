@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  BadGatewayException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -83,18 +84,24 @@ export class PaymentsService {
 
     this.logger.log(`Creating Mollie payment for order=${order.id} amount=${amountValue}`);
 
-    const molliePayment = await this.mollieClient.payments.create({
-      amount: { currency: 'EUR', value: amountValue },
-      method: PaymentMethod.ideal,
-      description: `Order ${order.id.slice(0, 8).toUpperCase()} — Oscar Vyent`,
-      redirectUrl,
-      webhookUrl,
-      metadata: { orderId: order.id },
-    });
+    let molliePayment: Awaited<ReturnType<typeof this.mollieClient.payments.create>>;
+    try {
+      molliePayment = await this.mollieClient.payments.create({
+        amount: { currency: 'EUR', value: amountValue },
+        method: PaymentMethod.ideal,
+        description: `Order ${order.id.slice(0, 8).toUpperCase()} — Oscar Vyent`,
+        redirectUrl,
+        webhookUrl,
+        metadata: { orderId: order.id },
+      });
+    } catch (err) {
+      this.logger.error(`Mollie payment creation failed for order=${order.id}: ${String(err)}`);
+      throw new BadGatewayException('Betaalverwerker niet beschikbaar. Probeer het later opnieuw.');
+    }
 
     const checkoutUrl = molliePayment._links.checkout?.href ?? null;
     if (!checkoutUrl) {
-      throw new BadRequestException('Mollie did not return a checkout URL');
+      throw new BadGatewayException('Mollie heeft geen checkout URL teruggegeven.');
     }
 
     const payment = this.paymentRepo.create({
@@ -157,7 +164,13 @@ export class PaymentsService {
     });
 
     // Fetch definitive status from Mollie — never trust webhook body content
-    const molliePayment = await this.mollieClient.payments.get(molliePaymentId);
+    let molliePayment: Awaited<ReturnType<typeof this.mollieClient.payments.get>>;
+    try {
+      molliePayment = await this.mollieClient.payments.get(molliePaymentId);
+    } catch (err) {
+      this.logger.error(`Mollie status fetch failed for molliePaymentId=${molliePaymentId}: ${String(err)}`);
+      return; // Return silently — Mollie will retry the webhook
+    }
     const mollieStatus = molliePayment.status as MolliePaymentStatus;
 
     const payment = await this.paymentRepo.findOne({

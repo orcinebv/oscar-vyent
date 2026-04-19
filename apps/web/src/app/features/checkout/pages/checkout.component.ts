@@ -15,8 +15,8 @@ import { ToastService } from '../../../core/services/toast.service';
 import { CheckoutStepsComponent } from '../../../shared/components/checkout-steps/checkout-steps.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
-/** Dutch postal code: 4 digits + space (optional) + 2 uppercase letters */
-const DUTCH_POSTAL_CODE = /^[1-9][0-9]{3}\s?[A-Z]{2}$/;
+/** Dutch postal code: 4 digits + space (optional) + 2 letters (case-insensitive; sent as uppercase to API) */
+const DUTCH_POSTAL_CODE = /^[1-9][0-9]{3}\s?[A-Za-z]{2}$/;
 /** Loose phone validation for NL/international numbers */
 const PHONE_PATTERN = /^[+]?[0-9\s\-(). ]{7,20}$/;
 
@@ -144,6 +144,15 @@ const PHONE_PATTERN = /^[+]?[0-9\s\-(). ]{7,20}$/;
               }
             </ul>
 
+            <div class="summary-row">
+              <span>Verzendkosten</span>
+              <span class="summary-row__free">Gratis</span>
+            </div>
+            <div class="summary-row summary-row--vat">
+              <span>Waarvan BTW (21%)</span>
+              <span>{{ cart.vatAmount() | currency:'EUR':'symbol':'1.2-2':'nl' }}</span>
+            </div>
+
             <hr class="divider" />
 
             <div class="summary-total">
@@ -216,6 +225,9 @@ const PHONE_PATTERN = /^[+]?[0-9\s\-(). ]{7,20}$/;
     .summary-item__qty { color: var(--color-text-muted); margin-left: var(--space-1); }
     .summary-item__price { font-weight: var(--font-weight-medium); margin-left: var(--space-4); }
 
+    .summary-row { display: flex; justify-content: space-between; font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-2); }
+    .summary-row--vat { color: var(--color-text-muted); font-style: italic; }
+    .summary-row__free { color: var(--color-success); font-weight: var(--font-weight-medium); }
     .summary-total { display: flex; justify-content: space-between; font-size: var(--font-size-lg); margin-bottom: var(--space-4); }
 
     .payment-method {
@@ -280,7 +292,7 @@ export class CheckoutComponent implements OnInit {
       customerEmail:      v.customerEmail!,
       customerFirstName:  v.customerFirstName!,
       customerLastName:   v.customerLastName!,
-      customerPhone:      v.customerPhone ?? undefined,
+      customerPhone:      v.customerPhone || undefined,
       shippingAddress:    v.shippingAddress!,
       shippingPostalCode: v.shippingPostalCode!.toUpperCase().replace(/\s/, ' '),
       shippingCity:       v.shippingCity!,

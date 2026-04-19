@@ -14,13 +14,20 @@ import { AuditLog } from '../modules/audit/audit-log.entity';
 
 dotenv.config({ path: 'apps/api/.env' });
 
+const databaseUrl = process.env['DATABASE_URL'];
+
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env['DB_HOST'] ?? 'localhost',
-  port: parseInt(process.env['DB_PORT'] ?? '5432', 10),
-  database: process.env['DB_NAME'] ?? 'oscar_vyent',
-  username: process.env['DB_USER'] ?? 'postgres',
-  password: process.env['DB_PASS'] ?? '',
+  ...(databaseUrl
+    ? { url: databaseUrl }
+    : {
+        host: process.env['DB_HOST'] ?? 'localhost',
+        port: parseInt(process.env['DB_PORT'] ?? '5432', 10),
+        database: process.env['DB_NAME'] ?? 'oscar_vyent',
+        username: process.env['DB_USER'] ?? 'postgres',
+        password: process.env['DB_PASS'] ?? '',
+      }),
+  ssl: databaseUrl ? { rejectUnauthorized: false } : false,
   entities: [Product, Order, OrderItem, Payment, AuditLog],
   migrations: ['apps/api/src/app/database/migrations/*.ts'],
   namingStrategy: new SnakeNamingStrategy(),

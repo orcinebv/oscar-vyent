@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "npx nx run-many --target=build --projects=api,web --parallel=false",
+  "outputDirectory": "dist/apps/web",
+  "functions": {
+    "apps/api/src/serverless.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 60
+    }
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "apps/api/src/serverless.ts" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}

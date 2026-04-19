@@ -62,9 +62,13 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
               <span>Verzendkosten</span>
               <span class="cart-summary__free">Gratis</span>
             </div>
+            <div class="cart-summary__row cart-summary__row--vat">
+              <span>Waarvan BTW (21%)</span>
+              <span>{{ cart.vatAmount() | currency:'EUR':'symbol':'1.2-2':'nl' }}</span>
+            </div>
             <hr class="divider" />
             <div class="cart-summary__total">
-              <span>Totaal</span>
+              <span>Totaal incl. BTW</span>
               <span>{{ cart.total() | currency:'EUR':'symbol':'1.2-2':'nl' }}</span>
             </div>
 
@@ -142,6 +146,7 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
     .cart-summary__title { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); margin-bottom: var(--space-4); }
     .cart-summary__row { display: flex; justify-content: space-between; font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-3); }
     .cart-summary__free { color: var(--color-success); font-weight: var(--font-weight-medium); }
+    .cart-summary__row--vat { color: var(--color-text-muted); font-style: italic; }
     .cart-summary__total { display: flex; justify-content: space-between; font-size: var(--font-size-xl); font-weight: var(--font-weight-bold); margin-bottom: var(--space-6); }
     .cart-summary__cta { margin-bottom: var(--space-4); }
     .cart-summary__trust { text-align: center; font-size: var(--font-size-xs); color: var(--color-text-muted); }
