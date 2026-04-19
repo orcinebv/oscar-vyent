@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "installCommand": "npm ci --legacy-peer-deps",
+  "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "./node_modules/.bin/nx run-many --target=build --projects=api,web --parallel=false",
   "outputDirectory": "dist/apps/web",
   "functions": {
