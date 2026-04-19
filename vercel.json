@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "nodeVersion": "22.x",
   "installCommand": "npm ci --legacy-peer-deps",
   "buildCommand": "npx nx run-many --target=build --projects=api,web --parallel=false",
   "outputDirectory": "dist/apps/web",
