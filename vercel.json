@@ -4,12 +4,12 @@
   "buildCommand": "npx nx run-many --target=build --projects=api,web --parallel=false",
   "outputDirectory": "dist/apps/web",
   "functions": {
-    "apps/api/src/serverless.ts": {
+    "api/index.ts": {
       "maxDuration": 60
     }
   },
   "routes": [
-    { "src": "/api/(.*)", "dest": "apps/api/src/serverless.ts" },
+    { "src": "/api/(.*)", "dest": "/api/index.ts" },
     { "src": "/(.*)", "dest": "/$1" }
   ]
 }
