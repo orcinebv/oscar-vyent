@@ -1,7 +1,7 @@
 {
   "version": 2,
   "installCommand": "npm ci --legacy-peer-deps",
-  "buildCommand": "npx nx run-many --target=build --projects=api,web --parallel=false",
+  "buildCommand": "./node_modules/.bin/nx run-many --target=build --projects=api,web --parallel=false",
   "outputDirectory": "dist/apps/web",
   "functions": {
     "api/index.ts": {
