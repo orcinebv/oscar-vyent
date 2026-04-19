@@ -132,6 +132,7 @@ describe('CartService', () => {
   describe('localStorage persistence', () => {
     it('persists cart to localStorage after addItem', () => {
       service.addItem(mockProduct(), 2);
+      TestBed.flushEffects();
       const stored = JSON.parse(localStorage.getItem('oscar_vyent_cart')!);
       expect(stored).toHaveLength(1);
       expect(stored[0].quantity).toBe(2);

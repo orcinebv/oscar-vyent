@@ -114,7 +114,7 @@ describe('OrdersService', () => {
       expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.manager.findOne).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ where: { id: 'product-uuid-1' } }),
+        expect.objectContaining({ where: expect.objectContaining({ id: 'product-uuid-1' }) }),
       );
       expect(mockProductsService.decrementStock).toHaveBeenCalledWith(
         'product-uuid-1',

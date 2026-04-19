@@ -163,16 +163,6 @@ export class PaymentsService {
       metadata: { molliePaymentId },
     });
 
-    // Fetch definitive status from Mollie — never trust webhook body content
-    let molliePayment: MolliePayment;
-    try {
-      molliePayment = await this.mollieClient.payments.get(molliePaymentId);
-    } catch (err) {
-      this.logger.error(`Mollie status fetch failed for molliePaymentId=${molliePaymentId}: ${String(err)}`);
-      return; // Return silently — Mollie will retry the webhook
-    }
-    const mollieStatus = molliePayment.status as MolliePaymentStatus;
-
     const payment = await this.paymentRepo.findOne({
       where: { molliePaymentId },
       relations: ['order'],
@@ -183,11 +173,21 @@ export class PaymentsService {
       return; // Return 200 to Mollie anyway — retrying won't help
     }
 
-    // Idempotency: already terminal — no further processing needed
+    // Idempotency: already terminal — skip Mollie API call entirely
     if (TERMINAL_PAYMENT_STATUSES.includes(payment.status)) {
       this.logger.log(`Payment ${payment.id} already in terminal state: ${payment.status}`);
       return;
     }
+
+    // Fetch definitive status from Mollie — never trust webhook body content
+    let molliePayment: MolliePayment;
+    try {
+      molliePayment = await this.mollieClient.payments.get(molliePaymentId);
+    } catch (err) {
+      this.logger.error(`Mollie status fetch failed for molliePaymentId=${molliePaymentId}: ${String(err)}`);
+      return; // Return silently — Mollie will retry the webhook
+    }
+    const mollieStatus = molliePayment.status as MolliePaymentStatus;
 
     const newPaymentStatus = mollieStatus as PaymentStatus;
     const previousPaymentStatus = payment.status;

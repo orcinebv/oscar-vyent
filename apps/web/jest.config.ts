@@ -1,7 +1,7 @@
 export default {
   displayName: 'web',
   preset: '../../jest.preset.js',
-  setupFilesAfterFramework: ['<rootDir>/src/test-setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/src/test-setup.ts'],
   transform: {
     '^.+\\.(ts|mjs|js|html)$': [
       'jest-preset-angular',
