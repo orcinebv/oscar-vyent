@@ -81,7 +81,7 @@
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.58.2",
     "eslint": "^9.39.4",
-    "jest": "30.0.5",
+    "jest": "^30.3.0",
     "jest-environment-node": "^29.7.0",
     "jest-util": "30.0.5",
     "nx": "22.6.5",
