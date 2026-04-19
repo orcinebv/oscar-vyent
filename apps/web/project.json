@@ -77,7 +77,7 @@
       "defaultConfiguration": "development",
       "options": {
         "proxyConfig": "apps/web/proxy.conf.json",
-        "allowedHosts": "all"
+        "allowedHosts": ["all"]
       },
       "continuous": true
     },
