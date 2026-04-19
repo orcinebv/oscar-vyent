@@ -10,7 +10,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { createMollieClient, MollieClient, PaymentMethod, PaymentStatus as MolliePaymentStatus } from '@mollie/api-client';
+import { createMollieClient, MollieClient, PaymentMethod, PaymentStatus as MolliePaymentStatus, Payment as MolliePayment } from '@mollie/api-client';
 import { Payment, PaymentStatus, TERMINAL_PAYMENT_STATUSES } from './payment.entity';
 import { OrdersService } from '../orders/orders.service';
 import { ProductsService } from '../products/products.service';
@@ -84,7 +84,7 @@ export class PaymentsService {
 
     this.logger.log(`Creating Mollie payment for order=${order.id} amount=${amountValue}`);
 
-    let molliePayment: Awaited<ReturnType<typeof this.mollieClient.payments.create>>;
+    let molliePayment: MolliePayment;
     try {
       molliePayment = await this.mollieClient.payments.create({
         amount: { currency: 'EUR', value: amountValue },
@@ -164,7 +164,7 @@ export class PaymentsService {
     });
 
     // Fetch definitive status from Mollie — never trust webhook body content
-    let molliePayment: Awaited<ReturnType<typeof this.mollieClient.payments.get>>;
+    let molliePayment: MolliePayment;
     try {
       molliePayment = await this.mollieClient.payments.get(molliePaymentId);
     } catch (err) {
