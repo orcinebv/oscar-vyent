@@ -87,6 +87,8 @@
     "jest-preset-angular": "^16.1.4",
     "jest-util": "30.0.5",
     "nx": "22.6.5",
+    "openai": "^6.34.0",
+    "sharp": "^0.34.5",
     "supertest": "^6.3.4",
     "ts-jest": "29.4.9",
     "ts-node": "^10.9.2",

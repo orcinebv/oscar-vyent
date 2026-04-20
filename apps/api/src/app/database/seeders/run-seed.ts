@@ -37,23 +37,22 @@ const ds = new DataSource({
 });
 
 const SEED_PRODUCTS = [
-  { name: 'Stroopwafel Luxe Blik', description: 'Authentieke Hollandse stroopwafels in een luxe bewaarblik. Handgemaakt met vers karamel. Per blik 24 stuks.', price: 12.95, stock: 150, imageUrl: '/assets/products/stroopwafel.jpg', category: 'Levensmiddelen', isActive: true },
-  { name: 'Delftsblauw Vaasje', description: 'Handgeschilderd Delfts blauw vaasje, 18cm hoog. Authentiek handwerk uit Delft.', price: 34.50, stock: 45, imageUrl: '/assets/products/delfts-blauw.jpg', category: 'Wonen & Decoratie', isActive: true },
-  { name: 'Nederlandse Tulpenbollen (10 stuks)', description: 'Geselecteerde tulpenbollen van Nederlandse kwekers. Bloeitijd voorjaar.', price: 8.75, stock: 300, imageUrl: '/assets/products/tulpen.jpg', category: 'Tuin', isActive: true },
-  { name: 'Gouda Kaas Oudbeleegd (500g)', description: 'Authentieke boerenkaas uit Gouda, minimaal 18 maanden gerijpt.', price: 11.25, stock: 80, imageUrl: '/assets/products/gouda-kaas.jpg', category: 'Levensmiddelen', isActive: true },
-  { name: 'Klompen Souvenirpaar', description: 'Traditionele Nederlandse klompen, met de hand beschilderd.', price: 19.95, stock: 60, imageUrl: '/assets/products/klompen.jpg', category: 'Souvenirs', isActive: true },
-  { name: 'Hagelslag Melkchocolade (400g)', description: 'De Ruijter melkchocolade hagelslag in familiepak.', price: 3.49, stock: 500, imageUrl: '/assets/products/hagelslag.jpg', category: 'Levensmiddelen', isActive: true },
-  { name: 'Windmolen Miniatuur (hout)', description: 'Houten miniatuur windmolen, 25cm hoog. Handgemaakt en geschilderd.', price: 24.99, stock: 35, imageUrl: '/assets/products/windmolen.jpg', category: 'Wonen & Decoratie', isActive: true },
+  { name: 'Pom', description: 'Het nationale gerecht van Suriname. Malse kip met pomtajer (taro) en citrus, langzaam gegaard in de oven. Geserveerd met rijst.', price: 13.50, stock: 60, imageUrl: '/assets/products/pom.png', category: 'Hoofdgerechten', isActive: true },
+  { name: 'Roti met Kerrie Kip', description: 'Zachte Surinaamse roti met malse kerrie kip, aardappel en bruine bonen. Bereid met huisgemaakte kerriemix.', price: 11.50, stock: 80, imageUrl: '/assets/products/roti.png', category: 'Hoofdgerechten', isActive: true },
+  { name: 'Saoto Soep', description: 'Aromatische Surinaamse kippensoep met mihoen, taugé, hardgekookt ei, gebakken uitjes en een scheutje ketjap.', price: 7.50, stock: 100, imageUrl: '/assets/products/saoto.png', category: 'Soepen', isActive: true },
+  { name: 'Bara (6 stuks)', description: 'Knapperige gefrituurde deegballetjes van spliterwten. Geserveerd met tamarinde chutney. Ideaal als snack of bij saoto.', price: 5.00, stock: 150, imageUrl: '/assets/products/bara.png', category: 'Snacks', isActive: true },
+  { name: 'Moksi Alesi', description: 'Surinaamse rijst met zwarte oogbonen, gestoofde kip en gezouten vlees. Geserveerd met bakabana.', price: 12.00, stock: 70, imageUrl: '/assets/products/moksi-alesi.png', category: 'Hoofdgerechten', isActive: true },
+  { name: 'Bruine Bonen met Rijst', description: 'Rijkgevulde bruine bonenstoof over witte rijst. Een klassiek Surinaams comfort food, bereid met verse kruiden.', price: 9.50, stock: 90, imageUrl: '/assets/products/bruine-bonen.png', category: 'Hoofdgerechten', isActive: true },
+  { name: 'Baka Bana', description: 'Gefrituurd rijpe bakabana, krokant van buiten en zacht van binnen. Heerlijk als bijgerecht of snack.', price: 4.00, stock: 120, imageUrl: '/assets/products/baka-bana.png', category: 'Snacks', isActive: true },
+  { name: 'Nasi Goreng', description: 'Surinaamse gebakken rijst met ei, kip, garnalen en groenten. Geserveerd met kroepoek en atjar.', price: 10.50, stock: 100, imageUrl: '/assets/products/nasi.png', category: 'Hoofdgerechten', isActive: true },
+  { name: 'Bami Goreng', description: 'Surinaamse gebakken mihoen met kip, kool, taugé en ketjap. Geserveerd met een gebakken ei.', price: 10.50, stock: 100, imageUrl: '/assets/products/bami.png', category: 'Hoofdgerechten', isActive: true },
+  { name: 'Broodje Pom', description: 'Knapperig broodje gevuld met warme pom. Dé Surinaamse klassieker om mee te nemen.', price: 6.50, stock: 80, imageUrl: '/assets/products/broodje-pom.png', category: 'Broodjes', isActive: true },
 ];
 
 async function main(): Promise<void> {
   await ds.initialize();
   const repo = ds.getRepository(Product);
-  const count = await repo.count();
-  if (count > 0) {
-    console.log(`Seeder skipped — ${count} products already exist`);
-    return;
-  }
+  await repo.clear();
   await repo.save(SEED_PRODUCTS.map(p => repo.create(p)));
   console.log(`Seeded ${SEED_PRODUCTS.length} demo products`);
 }
