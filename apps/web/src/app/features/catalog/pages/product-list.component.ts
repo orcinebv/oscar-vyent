@@ -17,7 +17,7 @@ import { ProductsStore } from '../products.store';
       <div class="container">
         <header class="catalog__header">
           <h1 class="catalog__title">Onze Producten</h1>
-          <p class="catalog__subtitle">Authentieke Nederlandse kwaliteitsproducten</p>
+          <p class="catalog__subtitle">Authentieke Surinaamse gerechten, vers bereid met liefde</p>
         </header>
 
         @if (store.loading()) {
