@@ -11,25 +11,29 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class CreateProductDto {
+export class UpdateProductDto {
+  @IsOptional()
   @IsString()
   @MinLength(2)
   @MaxLength(255)
-  name!: string;
+  name?: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(10)
-  description!: string;
+  description?: string;
 
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @IsPositive()
   @Type(() => Number)
-  price!: number;
+  price?: number;
 
+  @IsOptional()
   @IsInt()
   @Min(0)
   @Type(() => Number)
-  stock!: number;
+  stock?: number;
 
   @IsOptional()
   @IsString()

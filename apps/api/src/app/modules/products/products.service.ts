@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { Product } from './product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -18,9 +19,9 @@ export class ProductsService {
     private readonly productRepo: Repository<Product>,
   ) {}
 
-  async findAll(): Promise<Product[]> {
+  async findAll(includeInactive = false): Promise<Product[]> {
     return this.productRepo.find({
-      where: { isActive: true },
+      where: includeInactive ? undefined : { isActive: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -43,6 +44,19 @@ export class ProductsService {
       .andWhere('p.is_active = true')
       .getMany();
     return products;
+  }
+
+  async update(id: string, dto: UpdateProductDto): Promise<Product> {
+    const product = await this.productRepo.findOne({ where: { id } });
+    if (!product) throw new NotFoundException(`Product ${id} not found`);
+    Object.assign(product, dto);
+    return this.productRepo.save(product);
+  }
+
+  async remove(id: string): Promise<void> {
+    const product = await this.productRepo.findOne({ where: { id } });
+    if (!product) throw new NotFoundException(`Product ${id} not found`);
+    await this.productRepo.remove(product);
   }
 
   async create(dto: CreateProductDto): Promise<Product> {

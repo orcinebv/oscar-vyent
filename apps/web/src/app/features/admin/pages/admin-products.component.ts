@@ -1,0 +1,517 @@
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ProductDto } from '@oscar-vyent/contracts';
+import { ProductsService } from '../../../core/services/products.service';
+
+type FormMode = 'create' | 'edit';
+
+@Component({
+  selector: 'ov-admin-products',
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  template: `
+    <div class="admin">
+      <div class="admin__header">
+        <h1 class="admin__title">Productbeheer</h1>
+        <button class="btn btn--primary" (click)="openCreate()">+ Nieuw product</button>
+      </div>
+
+      @if (loading()) {
+        <p class="admin__loading">Laden...</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Naam</th>
+                <th>Categorie</th>
+                <th>Prijs</th>
+                <th>Voorraad</th>
+                <th>Actief</th>
+                <th>Acties</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (product of products(); track product.id) {
+                <tr [class.row--inactive]="!product.isActive">
+                  <td>
+                    @if (product.imageUrl) {
+                      <img [src]="product.imageUrl" [alt]="product.name" class="table__img" />
+                    } @else {
+                      <span class="table__no-img">—</span>
+                    }
+                  </td>
+                  <td class="table__name">{{ product.name }}</td>
+                  <td>{{ product.category ?? '—' }}</td>
+                  <td>{{ formatPrice(product.price) }}</td>
+                  <td>{{ product.stock }}</td>
+                  <td>
+                    <span class="badge" [class.badge--active]="product.isActive" [class.badge--inactive]="!product.isActive">
+                      {{ product.isActive ? 'Ja' : 'Nee' }}
+                    </span>
+                  </td>
+                  <td class="table__actions">
+                    <button class="btn btn--sm btn--ghost" (click)="openEdit(product)">Bewerken</button>
+                    <button class="btn btn--sm btn--danger" (click)="deleteProduct(product)">Verwijderen</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="table__empty">Geen producten gevonden.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    @if (showModal()) {
+      <div class="modal-backdrop" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+          <div class="modal__header">
+            <h2 class="modal__title">{{ mode() === 'create' ? 'Nieuw product' : 'Product bewerken' }}</h2>
+            <button class="modal__close" (click)="closeModal()" aria-label="Sluiten">✕</button>
+          </div>
+
+          <form [formGroup]="form" (ngSubmit)="save()" class="modal__body">
+            <div class="field">
+              <label class="field__label" for="name">Naam *</label>
+              <input id="name" class="field__input" formControlName="name" autocomplete="off" />
+              @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                <span class="field__error">Naam is verplicht (min. 2 tekens)</span>
+              }
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="description">Omschrijving *</label>
+              <textarea id="description" class="field__input field__input--textarea" formControlName="description" rows="3"></textarea>
+              @if (form.get('description')?.invalid && form.get('description')?.touched) {
+                <span class="field__error">Omschrijving is verplicht (min. 10 tekens)</span>
+              }
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label class="field__label" for="price">Prijs (€) *</label>
+                <input id="price" class="field__input" formControlName="price" type="number" min="0.01" step="0.01" />
+                @if (form.get('price')?.invalid && form.get('price')?.touched) {
+                  <span class="field__error">Geldige prijs vereist</span>
+                }
+              </div>
+              <div class="field">
+                <label class="field__label" for="stock">Voorraad *</label>
+                <input id="stock" class="field__input" formControlName="stock" type="number" min="0" step="1" />
+                @if (form.get('stock')?.invalid && form.get('stock')?.touched) {
+                  <span class="field__error">Voorraad is verplicht (min. 0)</span>
+                }
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="category">Categorie</label>
+              <input id="category" class="field__input" formControlName="category"
+                     list="category-options" autocomplete="off"
+                     placeholder="Kies of typ een nieuwe categorie" />
+              <datalist id="category-options">
+                @for (cat of categories(); track cat) {
+                  <option [value]="cat"></option>
+                }
+              </datalist>
+              <span class="field__hint">Kies een bestaande categorie of typ een nieuwe naam.</span>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="imageUrl">Afbeelding URL</label>
+              <input id="imageUrl" class="field__input" formControlName="imageUrl" type="url" />
+            </div>
+
+            <div class="field field--checkbox">
+              <label class="field__checkbox-label">
+                <input type="checkbox" formControlName="isActive" />
+                Actief (zichtbaar in winkel)
+              </label>
+            </div>
+
+            @if (saveError()) {
+              <p class="field__error field__error--block">{{ saveError() }}</p>
+            }
+
+            <div class="modal__footer">
+              <button type="button" class="btn btn--ghost" (click)="closeModal()">Annuleren</button>
+              <button type="submit" class="btn btn--primary" [disabled]="saving()">
+                {{ saving() ? 'Opslaan...' : 'Opslaan' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    }
+  `,
+  styles: [`
+    .admin {
+      padding: var(--space-8) var(--space-6);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .admin__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-6);
+    }
+
+    .admin__title {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-text-primary);
+      margin: 0;
+    }
+
+    .admin__loading {
+      color: var(--color-text-secondary);
+      text-align: center;
+      padding: var(--space-12);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface-raised);
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-size-sm);
+    }
+
+    .table th {
+      text-align: left;
+      padding: var(--space-3) var(--space-4);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-secondary);
+      border-bottom: 1px solid var(--color-border);
+      white-space: nowrap;
+    }
+
+    .table td {
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--color-border);
+      vertical-align: middle;
+    }
+
+    .table tr:last-child td { border-bottom: none; }
+
+    .row--inactive td { opacity: 0.5; }
+
+    .table__img {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+    }
+
+    .table__no-img {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      background: var(--color-surface-subtle);
+      border-radius: var(--radius-sm);
+      line-height: 48px;
+      text-align: center;
+      color: var(--color-text-tertiary);
+    }
+
+    .table__name { font-weight: var(--font-weight-medium); }
+
+    .table__actions { display: flex; gap: var(--space-2); }
+
+    .table__empty {
+      text-align: center;
+      color: var(--color-text-secondary);
+      padding: var(--space-8);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px var(--space-2);
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: var(--font-weight-semibold);
+    }
+
+    .badge--active { background: #d1fae5; color: #065f46; }
+    .badge--inactive { background: #fee2e2; color: #991b1b; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      border: none;
+      cursor: pointer;
+      transition: background-color var(--transition-fast), color var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn--primary {
+      background: var(--color-primary);
+      color: white;
+    }
+    .btn--primary:hover:not(:disabled) { background: var(--color-primary-hover, var(--color-accent)); }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--color-text-primary);
+      border: 1px solid var(--color-border);
+    }
+    .btn--ghost:hover { background: var(--color-surface-subtle); }
+
+    .btn--danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .btn--danger:hover { background: #fecaca; }
+
+    .btn--sm { padding: var(--space-1) var(--space-3); font-size: 12px; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+    }
+
+    .modal {
+      background: var(--color-surface-raised);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 540px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-5) var(--space-6);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .modal__title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-bold);
+      margin: 0;
+    }
+
+    .modal__close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: var(--font-size-lg);
+      color: var(--color-text-secondary);
+      padding: var(--space-1);
+      line-height: 1;
+    }
+
+    .modal__body { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); }
+
+    .modal__footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--space-3);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--color-border);
+    }
+
+    /* Form fields */
+    .field { display: flex; flex-direction: column; gap: var(--space-1); }
+
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+
+    .field__label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+    }
+
+    .field__input {
+      padding: var(--space-2) var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      background: var(--color-surface);
+      transition: border-color var(--transition-fast);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .field__input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+
+    .field__input--textarea { resize: vertical; }
+
+    .field--checkbox { flex-direction: row; }
+
+    .field__checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-size: var(--font-size-sm);
+      cursor: pointer;
+    }
+
+    .field__hint {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .field__error {
+      font-size: 12px;
+      color: #dc2626;
+    }
+
+    .field__error--block {
+      padding: var(--space-2) var(--space-3);
+      background: #fee2e2;
+      border-radius: var(--radius-sm);
+    }
+  `],
+})
+export class AdminProductsComponent implements OnInit {
+  private readonly productsService = inject(ProductsService);
+  private readonly fb = inject(FormBuilder);
+
+  products = signal<ProductDto[]>([]);
+  categories = computed(() =>
+    [...new Set(this.products().map((p) => p.category).filter((c): c is string => c !== null))].sort()
+  );
+  loading = signal(true);
+  showModal = signal(false);
+  mode = signal<FormMode>('create');
+  saving = signal(false);
+  saveError = signal<string | null>(null);
+  private editingId = signal<string | null>(null);
+
+  form = this.fb.group({
+    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(255)]],
+    description: ['', [Validators.required, Validators.minLength(10)]],
+    price: [null as number | null, [Validators.required, Validators.min(0.01)]],
+    stock: [0, [Validators.required, Validators.min(0)]],
+    category: [''],
+    imageUrl: [''],
+    isActive: [true],
+  });
+
+  ngOnInit(): void {
+    this.load();
+  }
+
+  formatPrice(price: number): string {
+    return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(price);
+  }
+
+  private load(): void {
+    this.loading.set(true);
+    this.productsService.getAllAdmin().subscribe({
+      next: (products) => {
+        this.products.set(products);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  openCreate(): void {
+    this.mode.set('create');
+    this.editingId.set(null);
+    this.form.reset({ isActive: true, stock: 0, price: null });
+    this.saveError.set(null);
+    this.showModal.set(true);
+  }
+
+  openEdit(product: ProductDto): void {
+    this.mode.set('edit');
+    this.editingId.set(product.id);
+    this.form.reset({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      category: product.category ?? '',
+      imageUrl: product.imageUrl ?? '',
+      isActive: product.isActive,
+    });
+    this.saveError.set(null);
+    this.showModal.set(true);
+  }
+
+  closeModal(): void {
+    this.showModal.set(false);
+  }
+
+  save(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.saving.set(true);
+    this.saveError.set(null);
+
+    const raw = this.form.getRawValue();
+    const dto = {
+      name: raw.name!,
+      description: raw.description!,
+      price: Number(raw.price),
+      stock: Number(raw.stock),
+      imageUrl: raw.imageUrl || null,
+      category: raw.category || null,
+      isActive: raw.isActive ?? true,
+    };
+
+    const request$ = this.mode() === 'create'
+      ? this.productsService.create(dto)
+      : this.productsService.update(this.editingId()!, dto);
+
+    request$.subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.showModal.set(false);
+        this.load();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        const msg = err?.error?.message;
+        this.saveError.set(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Er is een fout opgetreden.'));
+      },
+    });
+  }
+
+  deleteProduct(product: ProductDto): void {
+    if (!confirm(`Weet je zeker dat je "${product.name}" wilt verwijderen?`)) return;
+    this.productsService.delete(product.id).subscribe({
+      next: () => this.load(),
+      error: () => alert('Verwijderen mislukt.'),
+    });
+  }
+}

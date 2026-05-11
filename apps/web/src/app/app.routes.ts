@@ -53,6 +53,14 @@ export const routes: Routes = [
     title: 'Bestelling — Oscar Vyent',
   },
   {
+    path: 'beheer',
+    loadComponent: () =>
+      import('./features/admin/pages/admin-products.component').then(
+        (m) => m.AdminProductsComponent,
+      ),
+    title: 'Beheer — Oscar Vyent',
+  },
+  {
     path: '**',
     redirectTo: '/products',
   },
