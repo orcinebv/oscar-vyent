@@ -247,7 +247,6 @@ type FormMode = 'create' | 'edit';
     .badge--active { background: #d1fae5; color: #065f46; }
     .badge--inactive { background: #fee2e2; color: #991b1b; }
 
-    /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -285,7 +284,6 @@ type FormMode = 'create' | 'edit';
 
     .btn--sm { padding: var(--space-1) var(--space-3); font-size: 12px; }
 
-    /* Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -341,7 +339,6 @@ type FormMode = 'create' | 'edit';
       border-top: 1px solid var(--color-border);
     }
 
-    /* Form fields */
     .field { display: flex; flex-direction: column; gap: var(--space-1); }
 
     .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
