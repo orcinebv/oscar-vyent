@@ -75,6 +75,7 @@ export class OrdersService {
           unitPrice,
           quantity: item.quantity,
           totalPrice: unitPrice * item.quantity,
+          selectedExtras: item.selectedExtras ?? null,
         };
       });
 

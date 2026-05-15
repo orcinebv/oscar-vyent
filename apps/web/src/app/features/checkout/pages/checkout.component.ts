@@ -131,11 +131,14 @@ const PHONE_PATTERN = /^[+]?[0-9\s\-(). ]{7,20}$/;
             <h2 class="section-title">Uw bestelling</h2>
 
             <ul class="summary-items">
-              @for (item of cart.items(); track item.product.id) {
+              @for (item of cart.items(); track item.lineId) {
                 <li class="summary-item">
                   <span class="summary-item__name">
                     {{ item.product.name }}
                     <span class="summary-item__qty">× {{ item.quantity }}</span>
+                    @if (item.selectedExtras?.length) {
+                      <span class="summary-item__extras">{{ item.selectedExtras.join(', ') }}</span>
+                    }
                   </span>
                   <span class="summary-item__price">
                     {{ (item.product.price * item.quantity) | currency:'EUR':'symbol':'1.2-2':'nl' }}
@@ -221,8 +224,9 @@ const PHONE_PATTERN = /^[+]?[0-9\s\-(). ]{7,20}$/;
     /* Summary sidebar */
     .summary-items { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
     .summary-item { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--font-size-sm); }
-    .summary-item__name { color: var(--color-text-secondary); flex: 1; }
-    .summary-item__qty { color: var(--color-text-muted); margin-left: var(--space-1); }
+    .summary-item__name { color: var(--color-text-secondary); flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .summary-item__qty { color: var(--color-text-muted); }
+    .summary-item__extras { font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic; }
     .summary-item__price { font-weight: var(--font-weight-medium); margin-left: var(--space-4); }
 
     .summary-row { display: flex; justify-content: space-between; font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-2); }
@@ -301,6 +305,7 @@ export class CheckoutComponent implements OnInit {
       items: this.cart.items().map((i) => ({
         productId: i.product.id,
         quantity: i.quantity,
+        selectedExtras: i.selectedExtras?.length ? i.selectedExtras : undefined,
       })),
     };
 

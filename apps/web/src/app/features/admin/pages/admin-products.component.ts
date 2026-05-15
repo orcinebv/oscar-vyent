@@ -1,7 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ProductDto } from '@oscar-vyent/contracts';
+import { switchMap } from 'rxjs/operators';
+import { ProductDto, ProductExtraDto } from '@oscar-vyent/contracts';
 import { ProductsService } from '../../../core/services/products.service';
+import { ExtrasService } from '../../../core/services/extras.service';
 
 type FormMode = 'create' | 'edit';
 
@@ -133,6 +135,34 @@ type FormMode = 'create' | 'edit';
                 Actief (zichtbaar in winkel)
               </label>
             </div>
+
+            @if (allExtras().length > 0) {
+              <div class="field">
+                <div class="extras-header">
+                  <label class="field__label">Beschikbare wensen / extras</label>
+                  <button type="button" class="btn btn--ghost btn--sm" (click)="loadCategoryDefaults()">
+                    Laad categorie-standaard
+                  </button>
+                </div>
+                <div class="extras-list">
+                  @for (extra of allExtras(); track extra.id) {
+                    <label class="field__checkbox-label">
+                      <input type="checkbox"
+                             [checked]="selectedExtraIds().includes(extra.id)"
+                             (change)="toggleExtra(extra.id)" />
+                      {{ extra.name }}
+                      @if (extra.defaultForCategories?.length) {
+                        <span class="extra__cats">({{ extra.defaultForCategories.join(', ') }})</span>
+                      }
+                    </label>
+                  }
+                </div>
+                <span class="field__hint">
+                  Aangevinkte extras zijn keuze-opties voor de klant bij dit product.
+                  <a href="/beheer/extras" target="_blank">Extras beheren →</a>
+                </span>
+              </div>
+            }
 
             @if (saveError()) {
               <p class="field__error field__error--block">{{ saveError() }}</p>
@@ -393,13 +423,41 @@ type FormMode = 'create' | 'edit';
       background: #fee2e2;
       border-radius: var(--radius-sm);
     }
+
+    .extras-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-2);
+    }
+
+    .extras-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-3);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      background: var(--color-surface-subtle);
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .extra__cats {
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      margin-left: var(--space-1);
+    }
   `],
 })
 export class AdminProductsComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
+  private readonly extrasService = inject(ExtrasService);
   private readonly fb = inject(FormBuilder);
 
   products = signal<ProductDto[]>([]);
+  allExtras = signal<ProductExtraDto[]>([]);
+  selectedExtraIds = signal<string[]>([]);
   categories = computed(() =>
     [...new Set(this.products().map((p) => p.category).filter((c): c is string => c !== null))].sort()
   );
@@ -422,6 +480,7 @@ export class AdminProductsComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.extrasService.getAll().subscribe((extras) => this.allExtras.set(extras));
   }
 
   formatPrice(price: number): string {
@@ -443,6 +502,7 @@ export class AdminProductsComponent implements OnInit {
     this.mode.set('create');
     this.editingId.set(null);
     this.form.reset({ isActive: true, stock: 0, price: null });
+    this.selectedExtraIds.set([]);
     this.saveError.set(null);
     this.showModal.set(true);
   }
@@ -459,8 +519,24 @@ export class AdminProductsComponent implements OnInit {
       imageUrl: product.imageUrl ?? '',
       isActive: product.isActive,
     });
+    this.selectedExtraIds.set((product.extras ?? []).map((e) => e.id));
     this.saveError.set(null);
     this.showModal.set(true);
+  }
+
+  toggleExtra(extraId: string): void {
+    this.selectedExtraIds.update((ids) =>
+      ids.includes(extraId) ? ids.filter((id) => id !== extraId) : [...ids, extraId],
+    );
+  }
+
+  loadCategoryDefaults(): void {
+    const category = this.form.get('category')?.value ?? '';
+    if (!category) return;
+    const matching = this.allExtras()
+      .filter((e) => e.defaultForCategories?.includes(category))
+      .map((e) => e.id);
+    this.selectedExtraIds.set(matching);
   }
 
   closeModal(): void {
@@ -490,7 +566,11 @@ export class AdminProductsComponent implements OnInit {
       ? this.productsService.create(dto)
       : this.productsService.update(this.editingId()!, dto);
 
-    request$.subscribe({
+    request$.pipe(
+      switchMap((product) =>
+        this.productsService.setExtras(product.id, this.selectedExtraIds()),
+      ),
+    ).subscribe({
       next: () => {
         this.saving.set(false);
         this.showModal.set(false);

@@ -7,11 +7,12 @@ import { ProductsService } from '../../../core/services/products.service';
 import { CartService } from '../../../core/services/cart.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'ov-product-detail',
   standalone: true,
-  imports: [RouterLink, CurrencyPipe, LoadingSpinnerComponent],
+  imports: [RouterLink, CurrencyPipe, LoadingSpinnerComponent, FormsModule],
   template: `
     <div class="container">
       <nav class="breadcrumb" aria-label="Navigatiepad">
@@ -51,6 +52,22 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
             }
 
             <p class="detail__description">{{ p.description }}</p>
+
+            @if (p.extras?.length) {
+              <div class="detail__extras">
+                <p class="detail__extras-title">Wensen</p>
+                <div class="detail__extras-list">
+                  @for (extra of p.extras; track extra.id) {
+                    <label class="detail__extra-item">
+                      <input type="checkbox"
+                             [checked]="selectedExtras().includes(extra.name)"
+                             (change)="toggleExtra(extra.name)" />
+                      {{ extra.name }}
+                    </label>
+                  }
+                </div>
+              </div>
+            }
 
             <div class="detail__actions">
               <button
@@ -109,6 +126,11 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 
     .detail__trust { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-4); border-top: 1px solid var(--color-border); }
     .trust-item { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); color: var(--color-text-secondary); }
+
+    .detail__extras { padding: var(--space-4); background: var(--color-surface-subtle); border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+    .detail__extras-title { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin: 0 0 var(--space-3); }
+    .detail__extras-list { display: flex; flex-direction: column; gap: var(--space-2); }
+    .detail__extra-item { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); cursor: pointer; color: var(--color-text-primary); }
   `],
 })
 export class ProductDetailComponent implements OnInit {
@@ -120,9 +142,19 @@ export class ProductDetailComponent implements OnInit {
   protected readonly product = signal<ProductDto | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
+  protected readonly selectedExtras = signal<string[]>([]);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
+    const fromLineId = this.route.snapshot.queryParamMap.get('from');
+
+    if (fromLineId) {
+      const cartItem = this.cartService.items().find((i) => i.lineId === fromLineId);
+      if (cartItem) {
+        this.selectedExtras.set(cartItem.selectedExtras);
+      }
+    }
+
     this.productsService
       .getOne(id)
       .pipe(finalize(() => this.loading.set(false)))
@@ -132,8 +164,14 @@ export class ProductDetailComponent implements OnInit {
       });
   }
 
+  protected toggleExtra(name: string): void {
+    this.selectedExtras.update((list) =>
+      list.includes(name) ? list.filter((n) => n !== name) : [...list, name],
+    );
+  }
+
   protected onAddToCart(product: ProductDto): void {
-    this.cartService.addItem(product);
+    this.cartService.addItem(product, 1, this.selectedExtras());
     this.toast.success(`"${product.name}" is toegevoegd aan uw winkelwagen.`);
   }
 }

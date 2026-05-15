@@ -4,7 +4,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
+import { ProductExtra } from '../extras/product-extra.entity';
 
 @Entity('products')
 export class Product {
@@ -31,6 +34,14 @@ export class Product {
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   category!: string | null;
+
+  @ManyToMany(() => ProductExtra, (e) => e.products, { eager: false })
+  @JoinTable({
+    name: 'product_extras_map',
+    joinColumn: { name: 'product_id' },
+    inverseJoinColumn: { name: 'product_extra_id' },
+  })
+  extras!: ProductExtra[];
 
   @CreateDateColumn()
   createdAt!: Date;

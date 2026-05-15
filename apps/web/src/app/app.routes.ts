@@ -58,7 +58,15 @@ export const routes: Routes = [
       import('./features/admin/pages/admin-products.component').then(
         (m) => m.AdminProductsComponent,
       ),
-    title: 'Beheer — Oscar Vyent',
+    title: 'Productbeheer — Oscar Vyent',
+  },
+  {
+    path: 'beheer/extras',
+    loadComponent: () =>
+      import('./features/admin/pages/admin-extras.component').then(
+        (m) => m.AdminExtrasComponent,
+      ),
+    title: 'Extras Beheer — Oscar Vyent',
   },
   {
     path: '**',

@@ -17,8 +17,11 @@ import { CartService } from '../../../core/services/cart.service';
           <a routerLink="/products" routerLinkActive="active" class="header__nav-link">
             Producten
           </a>
-          <a routerLink="/beheer" routerLinkActive="active" class="header__nav-link">
+          <a routerLink="/beheer" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="header__nav-link">
             Beheer
+          </a>
+          <a routerLink="/beheer/extras" routerLinkActive="active" class="header__nav-link">
+            Extras
           </a>
         </nav>
 

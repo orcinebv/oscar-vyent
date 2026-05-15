@@ -37,4 +37,8 @@ export class OrderItem {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalPrice!: number;
+
+  /** Snapshot of selected extras at order time — never changes after creation */
+  @Column({ type: 'jsonb', nullable: true, name: 'selected_extras' })
+  selectedExtras!: string[] | null;
 }

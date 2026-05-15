@@ -22,6 +22,11 @@ export class CreateOrderItemDto {
   @Min(1)
   @Type(() => Number)
   quantity!: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  selectedExtras?: string[];
 }
 
 export class CreateOrderDto {

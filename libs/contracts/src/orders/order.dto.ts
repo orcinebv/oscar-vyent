@@ -17,11 +17,13 @@ export interface OrderItemDto {
   unitPrice: number;
   quantity: number;
   totalPrice: number;
+  selectedExtras: string[] | null;
 }
 
 export interface CreateOrderItemDto {
   productId: string;
   quantity: number;
+  selectedExtras?: string[];
 }
 
 export interface CreateOrderDto {

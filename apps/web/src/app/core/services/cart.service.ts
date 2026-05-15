@@ -4,9 +4,15 @@ import { ProductDto } from '@oscar-vyent/contracts';
 export interface CartItem {
   product: ProductDto;
   quantity: number;
+  selectedExtras: string[];
+  lineId: string;
 }
 
 const STORAGE_KEY = 'oscar_vyent_cart';
+
+function makeLineId(productId: string, extras: string[]): string {
+  return `${productId}:${[...extras].sort().join(',')}`;
+}
 
 /**
  * Signal-based cart state service.
@@ -18,6 +24,9 @@ const STORAGE_KEY = 'oscar_vyent_cart';
  *
  * An effect() auto-persists to localStorage whenever the items signal changes,
  * ensuring cart survives page reload without manual calls.
+ *
+ * lineId = productId + ':' + sorted(selectedExtras).join(',')
+ * Same product + same extras merge; same product + different extras = separate line.
  */
 @Injectable({ providedIn: 'root' })
 export class CartService {
@@ -49,29 +58,30 @@ export class CartService {
     });
   }
 
-  addItem(product: ProductDto, quantity = 1): void {
+  addItem(product: ProductDto, quantity = 1, selectedExtras: string[] = []): void {
+    const lineId = makeLineId(product.id, selectedExtras);
     this._items.update((items) => {
-      const idx = items.findIndex((i) => i.product.id === product.id);
+      const idx = items.findIndex((i) => i.lineId === lineId);
       if (idx >= 0) {
         return items.map((i, index) =>
           index === idx ? { ...i, quantity: i.quantity + quantity } : i,
         );
       }
-      return [...items, { product, quantity }];
+      return [...items, { product, quantity, selectedExtras, lineId }];
     });
   }
 
-  removeItem(productId: string): void {
-    this._items.update((items) => items.filter((i) => i.product.id !== productId));
+  removeItem(lineId: string): void {
+    this._items.update((items) => items.filter((i) => i.lineId !== lineId));
   }
 
-  updateQuantity(productId: string, quantity: number): void {
+  updateQuantity(lineId: string, quantity: number): void {
     if (quantity <= 0) {
-      this.removeItem(productId);
+      this.removeItem(lineId);
       return;
     }
     this._items.update((items) =>
-      items.map((i) => (i.product.id === productId ? { ...i, quantity } : i)),
+      items.map((i) => (i.lineId === lineId ? { ...i, quantity } : i)),
     );
   }
 
@@ -84,8 +94,14 @@ export class CartService {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
       const items = JSON.parse(raw) as CartItem[];
-      // Discard items with incomplete product data (can happen after stale localStorage)
-      return items.filter((i) => i?.product?.id && i.product.name && i.quantity > 0);
+      // Migrate old cart items that lack selectedExtras/lineId, and discard incomplete items
+      return items
+        .filter((i) => i?.product?.id && i.product.name && i.quantity > 0)
+        .map((i) => ({
+          ...i,
+          selectedExtras: i.selectedExtras ?? [],
+          lineId: i.lineId ?? makeLineId(i.product.id, i.selectedExtras ?? []),
+        }));
     } catch {
       return [];
     }

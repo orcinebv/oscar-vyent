@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { ProductDto, ProductListDto } from '@oscar-vyent/contracts';
 import { environment } from '../../../environments/environment';
 
-type CreateProductPayload = Omit<ProductDto, 'id' | 'createdAt' | 'updatedAt'>;
+type CreateProductPayload = Omit<ProductDto, 'id' | 'createdAt' | 'updatedAt' | 'extras'>;
 type UpdateProductPayload = Partial<CreateProductPayload>;
 
 @Injectable({ providedIn: 'root' })
@@ -34,5 +34,9 @@ export class ProductsService {
 
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
+  }
+
+  setExtras(productId: string, extraIds: string[]): Observable<ProductDto> {
+    return this.http.put<ProductDto>(`${this.base}/${productId}/extras`, { extraIds });
   }
 }

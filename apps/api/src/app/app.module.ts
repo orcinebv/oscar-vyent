@@ -4,6 +4,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { configuration } from './config/configuration';
 import { DatabaseModule } from './database/database.module';
 import { ProductsModule } from './modules/products/products.module';
+import { ExtrasModule } from './modules/extras/extras.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AuditModule } from './modules/audit/audit.module';
@@ -23,6 +24,7 @@ import { HealthController } from './health.controller';
 
     DatabaseModule,
     AuditModule,
+    ExtrasModule,
     ProductsModule,
     OrdersModule,
     PaymentsModule,

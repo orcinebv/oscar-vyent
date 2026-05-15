@@ -1,6 +1,13 @@
 // ─── Product Contracts ───────────────────────────────────────────────────────
 // Shared between API (response serialization) and Web (HTTP client typing).
 
+export interface ProductExtraDto {
+  id: string;
+  name: string;
+  isActive: boolean;
+  defaultForCategories: string[];
+}
+
 export interface ProductDto {
   id: string;
   name: string;
@@ -10,6 +17,7 @@ export interface ProductDto {
   imageUrl: string | null;
   isActive: boolean;
   category: string | null;
+  extras: ProductExtraDto[];
   createdAt: string;
   updatedAt: string;
 }

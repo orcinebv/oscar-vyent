@@ -5,8 +5,9 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
+import { Repository, EntityManager, In } from 'typeorm';
 import { Product } from './product.entity';
+import { ProductExtra } from '../extras/product-extra.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
@@ -17,11 +18,14 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
+    @InjectRepository(ProductExtra)
+    private readonly extraRepo: Repository<ProductExtra>,
   ) {}
 
   async findAll(includeInactive = false): Promise<Product[]> {
     return this.productRepo.find({
       where: includeInactive ? undefined : { isActive: true },
+      relations: ['extras'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -29,6 +33,7 @@ export class ProductsService {
   async findOne(id: string): Promise<Product> {
     const product = await this.productRepo.findOne({
       where: { id, isActive: true },
+      relations: ['extras'],
     });
     if (!product) {
       throw new NotFoundException(`Product ${id} not found`);
@@ -40,6 +45,7 @@ export class ProductsService {
     if (ids.length === 0) return [];
     const products = await this.productRepo
       .createQueryBuilder('p')
+      .leftJoinAndSelect('p.extras', 'extras')
       .whereInIds(ids)
       .andWhere('p.is_active = true')
       .getMany();
@@ -65,6 +71,20 @@ export class ProductsService {
       stock: dto.stock ?? 0,
       isActive: dto.isActive ?? true,
     });
+    return this.productRepo.save(product);
+  }
+
+  async setExtras(productId: string, extraIds: string[]): Promise<Product> {
+    const product = await this.productRepo.findOne({
+      where: { id: productId },
+      relations: ['extras'],
+    });
+    if (!product) throw new NotFoundException(`Product ${productId} not found`);
+
+    product.extras = extraIds.length > 0
+      ? await this.extraRepo.findBy({ id: In(extraIds) })
+      : [];
+
     return this.productRepo.save(product);
   }
 

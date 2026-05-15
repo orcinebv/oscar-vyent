@@ -24,7 +24,7 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
       } @else {
         <div class="cart-layout">
           <div class="cart-items">
-            @for (item of cart.items(); track item.product.id) {
+            @for (item of cart.items(); track item.lineId) {
               <div class="cart-item card">
                 <div class="cart-item__image">
                   @if (item.product.imageUrl) {
@@ -32,20 +32,23 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
                   }
                 </div>
                 <div class="cart-item__info">
-                  <a [routerLink]="['/products', item.product.id]" class="cart-item__name">
+                  <a [routerLink]="['/products', item.product.id]" [queryParams]="{from: item.lineId}" class="cart-item__name">
                     {{ item.product.name }}
                   </a>
+                  @if (item.selectedExtras?.length) {
+                    <p class="cart-item__extras">{{ item.selectedExtras.join(', ') }}</p>
+                  }
                   <p class="cart-item__unit-price">{{ item.product.price | currency:'EUR':'symbol':'1.2-2':'nl' }} per stuk</p>
                 </div>
                 <div class="cart-item__qty">
-                  <button class="qty-btn" type="button" (click)="decrement(item.product.id, item.quantity)" aria-label="Minder">−</button>
+                  <button class="qty-btn" type="button" (click)="decrement(item.lineId, item.quantity)" aria-label="Minder">−</button>
                   <span class="qty-value" [attr.aria-label]="'Aantal: ' + item.quantity">{{ item.quantity }}</span>
-                  <button class="qty-btn" type="button" (click)="cart.updateQuantity(item.product.id, item.quantity + 1)" aria-label="Meer">+</button>
+                  <button class="qty-btn" type="button" (click)="cart.updateQuantity(item.lineId, item.quantity + 1)" aria-label="Meer">+</button>
                 </div>
                 <div class="cart-item__total">
                   {{ (item.product.price * item.quantity) | currency:'EUR':'symbol':'1.2-2':'nl' }}
                 </div>
-                <button class="cart-item__remove btn btn-ghost btn-sm" type="button" (click)="cart.removeItem(item.product.id)" [attr.aria-label]="'Verwijder ' + item.product.name">
+                <button class="cart-item__remove btn btn-ghost btn-sm" type="button" (click)="cart.removeItem(item.lineId)" [attr.aria-label]="'Verwijder ' + item.product.name">
                   ✕
                 </button>
               </div>
@@ -124,6 +127,7 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
     .cart-item__image img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--radius-md); }
     .cart-item__name { font-weight: var(--font-weight-semibold); text-decoration: none; color: var(--color-text-primary); }
     .cart-item__name:hover { color: var(--color-primary-light); text-decoration: underline; }
+    .cart-item__extras { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 2px; font-style: italic; }
     .cart-item__unit-price { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-1); }
 
     .cart-item__qty { display: flex; align-items: center; gap: var(--space-2); }
@@ -155,7 +159,7 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
 export class CartComponent {
   protected readonly cart = inject(CartService);
 
-  protected decrement(productId: string, currentQty: number): void {
-    this.cart.updateQuantity(productId, currentQty - 1);
+  protected decrement(lineId: string, currentQty: number): void {
+    this.cart.updateQuantity(lineId, currentQty - 1);
   }
 }
