@@ -1,6 +1,12 @@
 import { Injectable, signal, computed, effect } from '@angular/core';
 import { ProductDto, ProductComboDto } from '@oscar-vyent/contracts';
 
+export interface ComboSlotSelection {
+  productId: string;
+  productName: string;
+  selectedExtras: string[];
+}
+
 export interface CartItem {
   product: ProductDto;
   quantity: number;
@@ -10,6 +16,8 @@ export interface CartItem {
   comboId?: string;
   /** For combo items: the chosen product names displayed in cart/checkout */
   selectedComboItems?: string[];
+  /** For combo items: full per-product slot selections including extras */
+  selectedComboSlots?: ComboSlotSelection[];
 }
 
 const STORAGE_KEY = 'oscar_vyent_cart';
@@ -75,9 +83,12 @@ export class CartService {
     });
   }
 
-  addCombo(combo: ProductComboDto, selectedComboItems: string[], quantity = 1): void {
-    const lineId = makeLineId(combo.id, selectedComboItems);
-    // Represent the combo as a product-shaped object for cart rendering
+  addCombo(combo: ProductComboDto, slots: ComboSlotSelection[], quantity = 1): void {
+    const lineId = `combo:${combo.id}:${slots
+      .map(s => `${s.productId}[${[...s.selectedExtras].sort().join(',')}]`)
+      .sort()
+      .join('+')}`;
+    const selectedComboItems = slots.map(s => s.productName);
     const product: ProductDto = {
       id: combo.id,
       name: combo.name,
@@ -106,6 +117,7 @@ export class CartService {
         isCombo: true,
         comboId: combo.id,
         selectedComboItems,
+        selectedComboSlots: slots,
       }];
     });
   }

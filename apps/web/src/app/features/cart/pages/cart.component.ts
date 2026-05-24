@@ -32,10 +32,18 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
                   }
                 </div>
                 <div class="cart-item__info">
-                  <a [routerLink]="['/products', item.product.id]" [queryParams]="{from: item.lineId}" class="cart-item__name">
+                  <a [routerLink]="item.isCombo ? ['/combos', item.comboId] : ['/products', item.product.id]" [queryParams]="{from: item.lineId}" class="cart-item__name">
                     {{ item.product.name }}
                   </a>
-                  @if (item.selectedExtras.length) {
+                  @if (item.isCombo && item.selectedComboSlots?.length) {
+                    <div class="cart-item__slots">
+                      @for (slot of item.selectedComboSlots!; track slot.productId) {
+                        <span class="cart-item__slot">
+                          {{ slot.productName }}@if (slot.selectedExtras.length) {<span class="cart-item__slot-extras"> · {{ slot.selectedExtras.join(', ') }}</span>}
+                        </span>
+                      }
+                    </div>
+                  } @else if (item.selectedExtras.length) {
                     <p class="cart-item__extras">{{ item.selectedExtras.join(', ') }}</p>
                   }
                   <p class="cart-item__unit-price">{{ item.product.price | currency:'EUR':'symbol':'1.2-2':'nl' }} per stuk</p>
@@ -128,6 +136,9 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
     .cart-item__name { font-weight: var(--font-weight-semibold); text-decoration: none; color: var(--color-text-primary); }
     .cart-item__name:hover { color: var(--color-primary-light); text-decoration: underline; }
     .cart-item__extras { font-size: var(--font-size-xs); color: var(--color-text-secondary); margin-top: 2px; font-style: italic; }
+    .cart-item__slots { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+    .cart-item__slot { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
+    .cart-item__slot-extras { font-style: italic; }
     .cart-item__unit-price { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-1); }
 
     .cart-item__qty { display: flex; align-items: center; gap: var(--space-2); }

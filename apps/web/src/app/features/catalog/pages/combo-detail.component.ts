@@ -1,12 +1,17 @@
-import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { finalize } from 'rxjs';
-import { ProductComboDto } from '@oscar-vyent/contracts';
+import { ProductComboDto, ProductDto } from '@oscar-vyent/contracts';
 import { CombosService } from '../../../core/services/combos.service';
-import { CartService } from '../../../core/services/cart.service';
+import { CartService, ComboSlotSelection } from '../../../core/services/cart.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+
+interface SlotSelection {
+  product: ProductDto;
+  selectedExtras: string[];
+}
 
 @Component({
   selector: 'ov-combo-detail',
@@ -56,22 +61,41 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
               <div class="combo-picker">
                 <p class="combo-picker__title">
                   Kies {{ c.slotCount }} {{ c.slotCount === 1 ? 'product' : 'producten' }}
-                  <span class="combo-picker__count">({{ selectedItems().length }}/{{ c.slotCount }} gekozen)</span>
+                  <span class="combo-picker__count">({{ selectedSlots().length }}/{{ c.slotCount }} gekozen)</span>
                 </p>
                 <div class="combo-picker__list">
                   @for (product of c.products; track product.id) {
-                    <label class="combo-picker__item" [class.combo-picker__item--selected]="isSelected(product.name)">
-                      <input
-                        type="checkbox"
-                        [checked]="isSelected(product.name)"
-                        [disabled]="!isSelected(product.name) && selectedItems().length >= c.slotCount"
-                        (change)="toggleItem(product.name, c.slotCount)"
-                      />
-                      <span class="combo-picker__item-name">{{ product.name }}</span>
-                      @if (product.imageUrl) {
-                        <img [src]="product.imageUrl" [alt]="product.name" class="combo-picker__thumb" />
+                    <div class="combo-picker__item-wrap">
+                      <label class="combo-picker__item" [class.combo-picker__item--selected]="isSelected(product.id)">
+                        <input
+                          type="checkbox"
+                          [checked]="isSelected(product.id)"
+                          [disabled]="!isSelected(product.id) && selectedSlots().length >= c.slotCount"
+                          (change)="toggleSlot(product, c.slotCount)"
+                        />
+                        <span class="combo-picker__item-name">{{ product.name }}</span>
+                        @if (product.imageUrl) {
+                          <img [src]="product.imageUrl" [alt]="product.name" class="combo-picker__thumb" />
+                        }
+                      </label>
+                      @if (isSelected(product.id) && product.extras.length) {
+                        <div class="combo-picker__extras">
+                          <p class="combo-picker__extras-label">Wensen voor {{ product.name }}:</p>
+                          <div class="combo-picker__extras-list">
+                            @for (extra of product.extras; track extra.id) {
+                              <label class="combo-picker__extra-item">
+                                <input
+                                  type="checkbox"
+                                  [checked]="isExtraSelected(product.id, extra.name)"
+                                  (change)="toggleExtra(product.id, extra.name)"
+                                />
+                                {{ extra.name }}
+                              </label>
+                            }
+                          </div>
+                        </div>
                       }
-                    </label>
+                    </div>
                   }
                 </div>
                 @if (selectionError()) {
@@ -83,11 +107,11 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                 <button
                   type="button"
                   class="btn btn-primary btn-lg"
-                  [disabled]="c.stock === 0 || selectedItems().length !== c.slotCount"
+                  [disabled]="c.stock === 0 || selectedSlots().length !== c.slotCount"
                   (click)="onAddToCart(c)"
                 >
-                  @if (selectedItems().length !== c.slotCount) {
-                    Kies nog {{ c.slotCount - selectedItems().length }} {{ c.slotCount - selectedItems().length === 1 ? 'product' : 'producten' }}
+                  @if (selectedSlots().length !== c.slotCount) {
+                    Kies nog {{ c.slotCount - selectedSlots().length }} {{ c.slotCount - selectedSlots().length === 1 ? 'product' : 'producten' }}
                   } @else {
                     In winkelwagen
                   }
@@ -188,6 +212,43 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
       flex-shrink: 0;
     }
     .combo-picker__error { font-size: 12px; color: #dc2626; margin-top: var(--space-2); }
+
+    .combo-picker__item-wrap { display: flex; flex-direction: column; gap: 0; }
+    .combo-picker__extras {
+      margin-left: var(--space-8);
+      padding: var(--space-2) var(--space-3);
+      background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface-raised));
+      border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border));
+      border-top: none;
+      border-radius: 0 0 var(--radius-md) var(--radius-md);
+    }
+    .combo-picker__extras-label {
+      font-size: 11px;
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: var(--space-2);
+    }
+    .combo-picker__extras-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .combo-picker__extra-item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      cursor: pointer;
+      padding: 2px var(--space-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      background: var(--color-surface-raised);
+      transition: background var(--transition-fast);
+    }
+    .combo-picker__extra-item:has(input:checked) {
+      background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface-raised));
+      border-color: var(--color-primary);
+    }
+    .combo-picker__extra-item input { display: none; }
   `],
 })
 export class ComboDetailComponent implements OnInit {
@@ -199,40 +260,83 @@ export class ComboDetailComponent implements OnInit {
   protected readonly combo = signal<ProductComboDto | null>(null);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
-  protected readonly selectedItems = signal<string[]>([]);
+  protected readonly selectedSlots = signal<SlotSelection[]>([]);
   protected readonly selectionError = signal<string | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
+    const fromLineId = this.route.snapshot.queryParamMap.get('from');
     this.combosService
       .getOne(id)
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (c) => this.combo.set(c),
+        next: (c) => {
+          this.combo.set(c);
+          if (fromLineId) {
+            const cartItem = this.cartService.items().find(i => i.lineId === fromLineId);
+            if (cartItem?.selectedComboSlots?.length) {
+              this.selectedSlots.set(
+                cartItem.selectedComboSlots.map(slot => ({
+                  product: c.products.find(p => p.id === slot.productId) ?? { id: slot.productId, name: slot.productName } as ProductDto,
+                  selectedExtras: slot.selectedExtras,
+                }))
+              );
+            }
+          }
+        },
         error: () => this.error.set('Combinatie kon niet geladen worden.'),
       });
   }
 
-  protected isSelected(name: string): boolean {
-    return this.selectedItems().includes(name);
+  protected isSelected(productId: string): boolean {
+    return this.selectedSlots().some(s => s.product.id === productId);
   }
 
-  protected toggleItem(name: string, slotCount: number): void {
+  protected isExtraSelected(productId: string, extraName: string): boolean {
+    return this.selectedSlots().find(s => s.product.id === productId)?.selectedExtras.includes(extraName) ?? false;
+  }
+
+  protected toggleSlot(product: ProductDto, slotCount: number): void {
     this.selectionError.set(null);
-    this.selectedItems.update((list) => {
-      if (list.includes(name)) return list.filter((n) => n !== name);
-      if (list.length >= slotCount) {
-        this.selectionError.set(`Je kunt maximaal ${slotCount} producten kiezen.`);
-        return list;
+    this.selectedSlots.update((slots) => {
+      if (slots.some(s => s.product.id === product.id)) {
+        return slots.filter(s => s.product.id !== product.id);
       }
-      return [...list, name];
+      if (slots.length >= slotCount) {
+        this.selectionError.set(`Je kunt maximaal ${slotCount} producten kiezen.`);
+        return slots;
+      }
+      return [...slots, { product, selectedExtras: [] }];
     });
   }
 
+  protected toggleExtra(productId: string, extraName: string): void {
+    this.selectedSlots.update((slots) =>
+      slots.map(s => {
+        if (s.product.id !== productId) return s;
+        const has = s.selectedExtras.includes(extraName);
+        return {
+          ...s,
+          selectedExtras: has
+            ? s.selectedExtras.filter(e => e !== extraName)
+            : [...s.selectedExtras, extraName],
+        };
+      })
+    );
+  }
+
   protected onAddToCart(combo: ProductComboDto): void {
-    if (this.selectedItems().length !== combo.slotCount) return;
-    this.cartService.addCombo(combo, this.selectedItems());
-    this.toast.success(`"${combo.name}" (${this.selectedItems().join(' + ')}) toegevoegd aan winkelwagen.`);
-    this.selectedItems.set([]);
+    if (this.selectedSlots().length !== combo.slotCount) return;
+    const slots: ComboSlotSelection[] = this.selectedSlots().map(s => ({
+      productId: s.product.id,
+      productName: s.product.name,
+      selectedExtras: s.selectedExtras,
+    }));
+    this.cartService.addCombo(combo, slots);
+    const names = slots.map(s =>
+      s.selectedExtras.length ? `${s.productName} (${s.selectedExtras.join(', ')})` : s.productName
+    );
+    this.toast.success(`"${combo.name}" (${names.join(' + ')}) toegevoegd aan winkelwagen.`);
+    this.selectedSlots.set([]);
   }
 }

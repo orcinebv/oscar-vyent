@@ -136,7 +136,13 @@ const PHONE_PATTERN = /^[+]?[0-9\s\-(). ]{7,20}$/;
                   <span class="summary-item__name">
                     {{ item.product.name }}
                     <span class="summary-item__qty">× {{ item.quantity }}</span>
-                    @if (item.selectedExtras.length) {
+                    @if (item.isCombo && item.selectedComboSlots?.length) {
+                      @for (slot of item.selectedComboSlots!; track slot.productId) {
+                        <span class="summary-item__extras">
+                          {{ slot.productName }}@if (slot.selectedExtras.length) { · {{ slot.selectedExtras.join(', ') }}}
+                        </span>
+                      }
+                    } @else if (item.selectedExtras.length) {
                       <span class="summary-item__extras">{{ item.selectedExtras.join(', ') }}</span>
                     }
                   </span>
@@ -307,7 +313,13 @@ export class CheckoutComponent implements OnInit {
             comboId: i.comboId,
             itemType: 'combo' as const,
             quantity: i.quantity,
-            selectedExtras: i.selectedComboItems?.length ? i.selectedComboItems : undefined,
+            selectedExtras: i.selectedComboSlots
+              ? i.selectedComboSlots.flatMap(s =>
+                  s.selectedExtras.length
+                    ? [`${s.productName}: ${s.selectedExtras.join(', ')}`]
+                    : [s.productName]
+                )
+              : i.selectedComboItems,
           }
         : {
             productId: i.product.id,

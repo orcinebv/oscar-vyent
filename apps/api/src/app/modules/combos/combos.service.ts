@@ -25,7 +25,7 @@ export class CombosService {
   async findAll(includeInactive = false): Promise<ProductCombo[]> {
     return this.comboRepo.find({
       where: includeInactive ? undefined : { isActive: true },
-      relations: ['products'],
+      relations: ['products', 'products.extras'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -33,7 +33,7 @@ export class CombosService {
   async findOne(id: string): Promise<ProductCombo> {
     const combo = await this.comboRepo.findOne({
       where: { id, isActive: true },
-      relations: ['products'],
+      relations: ['products', 'products.extras'],
     });
     if (!combo) throw new NotFoundException(`Combo ${id} not found`);
     return combo;

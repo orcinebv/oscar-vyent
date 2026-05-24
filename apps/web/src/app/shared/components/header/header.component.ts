@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 
 @Component({
@@ -17,15 +17,23 @@ import { CartService } from '../../../core/services/cart.service';
           <a routerLink="/products" routerLinkActive="active" class="header__nav-link">
             Producten
           </a>
-          <a routerLink="/beheer" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="header__nav-link">
-            Beheer
-          </a>
-          <a routerLink="/beheer/extras" routerLinkActive="active" class="header__nav-link">
-            Extras
-          </a>
-          <a routerLink="/beheer/combos" routerLinkActive="active" class="header__nav-link">
-            Combinaties
-          </a>
+          <div class="header__dropdown" [class.header__dropdown--active]="isBeheerActive()">
+            <span class="header__nav-link header__dropdown-toggle">Beheer ▾</span>
+            <ul class="header__dropdown-menu" role="menu">
+              <li>
+                <a routerLink="/beheer" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}"
+                   class="header__dropdown-item" role="menuitem">Producten</a>
+              </li>
+              <li>
+                <a routerLink="/beheer/extras" routerLinkActive="active"
+                   class="header__dropdown-item" role="menuitem">Extras</a>
+              </li>
+              <li>
+                <a routerLink="/beheer/combos" routerLinkActive="active"
+                   class="header__dropdown-item" role="menuitem">Combinaties</a>
+              </li>
+            </ul>
+          </div>
         </nav>
 
         <div class="header__actions">
@@ -104,6 +112,59 @@ import { CartService } from '../../../core/services/cart.service';
       text-decoration: none;
     }
 
+    .header__dropdown {
+      position: relative;
+    }
+
+    .header__dropdown-toggle {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .header__dropdown--active .header__dropdown-toggle,
+    .header__dropdown:hover .header__dropdown-toggle {
+      color: var(--color-accent);
+      background-color: var(--color-surface-subtle);
+    }
+
+    .header__dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      min-width: 160px;
+      background: var(--color-surface-raised);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-1) 0;
+      list-style: none;
+      z-index: 200;
+    }
+
+    .header__dropdown:hover .header__dropdown-menu {
+      display: block;
+    }
+
+    .header__dropdown-item {
+      display: block;
+      padding: var(--space-2) var(--space-4);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-primary);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: background var(--transition-fast), color var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .header__dropdown-item:hover,
+    .header__dropdown-item.active {
+      background: var(--color-surface-subtle);
+      color: var(--color-accent);
+    }
+
     .header__actions { margin-left: auto; }
 
     .header__cart {
@@ -146,4 +207,9 @@ import { CartService } from '../../../core/services/cart.service';
 })
 export class HeaderComponent {
   protected readonly cart = inject(CartService);
+  private readonly router = inject(Router);
+
+  protected isBeheerActive(): boolean {
+    return this.router.url.startsWith('/beheer');
+  }
 }

@@ -46,7 +46,7 @@ type FormMode = 'create' | 'edit';
                   <td>{{ combo.category ?? '—' }}</td>
                   <td>{{ formatPrice(combo.price) }}</td>
                   <td>{{ combo.slotCount }}</td>
-                  <td>{{ combo.products.length ?? 0 }}</td>
+                  <td>{{ combo.products.length }}</td>
                   <td>{{ combo.stock }}</td>
                   <td>
                     <span class="badge" [class.badge--active]="combo.isActive" [class.badge--inactive]="!combo.isActive">
