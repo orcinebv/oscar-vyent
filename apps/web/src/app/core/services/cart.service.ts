@@ -1,11 +1,15 @@
 import { Injectable, signal, computed, effect } from '@angular/core';
-import { ProductDto } from '@oscar-vyent/contracts';
+import { ProductDto, ProductComboDto } from '@oscar-vyent/contracts';
 
 export interface CartItem {
   product: ProductDto;
   quantity: number;
   selectedExtras: string[];
   lineId: string;
+  isCombo?: boolean;
+  comboId?: string;
+  /** For combo items: the chosen product names displayed in cart/checkout */
+  selectedComboItems?: string[];
 }
 
 const STORAGE_KEY = 'oscar_vyent_cart';
@@ -68,6 +72,41 @@ export class CartService {
         );
       }
       return [...items, { product, quantity, selectedExtras, lineId }];
+    });
+  }
+
+  addCombo(combo: ProductComboDto, selectedComboItems: string[], quantity = 1): void {
+    const lineId = makeLineId(combo.id, selectedComboItems);
+    // Represent the combo as a product-shaped object for cart rendering
+    const product: ProductDto = {
+      id: combo.id,
+      name: combo.name,
+      description: combo.description,
+      price: combo.price,
+      stock: combo.stock,
+      imageUrl: combo.imageUrl,
+      isActive: combo.isActive,
+      category: combo.category,
+      extras: [],
+      createdAt: combo.createdAt,
+      updatedAt: combo.updatedAt,
+    };
+    this._items.update((items) => {
+      const idx = items.findIndex((i) => i.lineId === lineId);
+      if (idx >= 0) {
+        return items.map((i, index) =>
+          index === idx ? { ...i, quantity: i.quantity + quantity } : i,
+        );
+      }
+      return [...items, {
+        product,
+        quantity,
+        selectedExtras: selectedComboItems,
+        lineId,
+        isCombo: true,
+        comboId: combo.id,
+        selectedComboItems,
+      }];
     });
   }
 

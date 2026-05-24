@@ -10,20 +10,24 @@ export type OrderStatus =
   | 'cancelled'
   | 'failed';
 
+export interface CreateOrderItemDto {
+  productId?: string;
+  comboId?: string;
+  itemType?: 'product' | 'combo';
+  quantity: number;
+  selectedExtras?: string[];
+}
+
 export interface OrderItemDto {
   id: string;
-  productId: string;
+  itemType: 'product' | 'combo';
+  productId: string | null;
+  comboId: string | null;
   productName: string;
   unitPrice: number;
   quantity: number;
   totalPrice: number;
   selectedExtras: string[] | null;
-}
-
-export interface CreateOrderItemDto {
-  productId: string;
-  quantity: number;
-  selectedExtras?: string[];
 }
 
 export interface CreateOrderDto {

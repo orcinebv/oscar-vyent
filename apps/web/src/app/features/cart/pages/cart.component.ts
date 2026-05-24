@@ -35,7 +35,7 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
                   <a [routerLink]="['/products', item.product.id]" [queryParams]="{from: item.lineId}" class="cart-item__name">
                     {{ item.product.name }}
                   </a>
-                  @if (item.selectedExtras?.length) {
+                  @if (item.selectedExtras.length) {
                     <p class="cart-item__extras">{{ item.selectedExtras.join(', ') }}</p>
                   }
                   <p class="cart-item__unit-price">{{ item.product.price | currency:'EUR':'symbol':'1.2-2':'nl' }} per stuk</p>

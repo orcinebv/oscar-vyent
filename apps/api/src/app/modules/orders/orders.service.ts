@@ -10,7 +10,9 @@ import { Repository, DataSource } from 'typeorm';
 import { Order, OrderStatus, ORDER_TRANSITIONS } from './order.entity';
 import { OrderItem } from './order-item.entity';
 import { Product } from '../products/product.entity';
+import { ProductCombo } from '../combos/product-combo.entity';
 import { ProductsService } from '../products/products.service';
+import { CombosService } from '../combos/combos.service';
 import { AuditService } from '../audit/audit.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AuditActorType } from '@oscar-vyent/contracts';
@@ -25,6 +27,7 @@ export class OrdersService {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly productsService: ProductsService,
+    private readonly combosService: CombosService,
     private readonly auditService: AuditService,
   ) {}
 
@@ -43,41 +46,52 @@ export class OrdersService {
     await queryRunner.startTransaction();
 
     try {
-      // Load all products inside the transaction for locking
-      const productMap = new Map<string, Product>();
+      // Lock & validate stock for each item, build order item snapshots
+      const orderItems: Partial<OrderItem>[] = [];
+
       for (const item of dto.items) {
-        const product = await queryRunner.manager.findOne(Product, {
-          where: { id: item.productId, isActive: true },
-          lock: { mode: 'pessimistic_write' },
-        });
-        if (!product) {
-          throw new NotFoundException(`Product ${item.productId} not found or inactive`);
+        const isCombo = item.itemType === 'combo' || !!item.comboId;
+
+        if (isCombo) {
+          if (!item.comboId) throw new NotFoundException('comboId is required for combo items');
+          const combo = await queryRunner.manager.findOne(ProductCombo, {
+            where: { id: item.comboId, isActive: true },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (!combo) throw new NotFoundException(`Combo ${item.comboId} not found or inactive`);
+          await this.combosService.decrementStock(item.comboId, item.quantity, queryRunner.manager);
+          const unitPrice = Number(combo.price);
+          orderItems.push({
+            itemType: 'combo',
+            comboId: item.comboId,
+            productId: null,
+            productName: combo.name,
+            unitPrice,
+            quantity: item.quantity,
+            totalPrice: unitPrice * item.quantity,
+            selectedExtras: item.selectedExtras ?? null,
+          });
+        } else {
+          if (!item.productId) throw new NotFoundException('productId is required for product items');
+          const product = await queryRunner.manager.findOne(Product, {
+            where: { id: item.productId, isActive: true },
+            lock: { mode: 'pessimistic_write' },
+          });
+          if (!product) throw new NotFoundException(`Product ${item.productId} not found or inactive`);
+          await this.productsService.decrementStock(item.productId, item.quantity, queryRunner.manager);
+          const unitPrice = Number(product.price);
+          orderItems.push({
+            itemType: 'product',
+            productId: item.productId,
+            comboId: null,
+            productName: product.name,
+            unitPrice,
+            quantity: item.quantity,
+            totalPrice: unitPrice * item.quantity,
+            selectedExtras: item.selectedExtras ?? null,
+          });
         }
-        productMap.set(item.productId, product);
       }
-
-      // Validate & decrement stock for each item
-      for (const item of dto.items) {
-        await this.productsService.decrementStock(
-          item.productId,
-          item.quantity,
-          queryRunner.manager,
-        );
-      }
-
-      // Build order items with price snapshots
-      const orderItems: Partial<OrderItem>[] = dto.items.map((item) => {
-        const product = productMap.get(item.productId)!;
-        const unitPrice = Number(product.price);
-        return {
-          productId: item.productId,
-          productName: product.name,
-          unitPrice,
-          quantity: item.quantity,
-          totalPrice: unitPrice * item.quantity,
-          selectedExtras: item.selectedExtras ?? null,
-        };
-      });
 
       const totalAmount = orderItems.reduce((sum, i) => sum + (i.totalPrice ?? 0), 0);
 

@@ -69,6 +69,22 @@ export const routes: Routes = [
     title: 'Extras Beheer — Oscar Vyent',
   },
   {
+    path: 'beheer/combos',
+    loadComponent: () =>
+      import('./features/admin/pages/admin-combos.component').then(
+        (m) => m.AdminCombosComponent,
+      ),
+    title: 'Combinaties Beheer — Oscar Vyent',
+  },
+  {
+    path: 'combos/:id',
+    loadComponent: () =>
+      import('./features/catalog/pages/combo-detail.component').then(
+        (m) => m.ComboDetailComponent,
+      ),
+    title: 'Combinatie — Oscar Vyent',
+  },
+  {
     path: '**',
     redirectTo: '/products',
   },

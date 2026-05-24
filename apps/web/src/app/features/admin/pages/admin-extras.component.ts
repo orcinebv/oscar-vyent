@@ -38,7 +38,7 @@ type FormMode = 'create' | 'edit';
                 <tr [class.row--inactive]="!extra.isActive">
                   <td class="table__name">{{ extra.name }}</td>
                   <td class="table__cats">
-                    {{ extra.defaultForCategories?.length ? extra.defaultForCategories.join(', ') : '—' }}
+                    {{ extra.defaultForCategories.length ? extra.defaultForCategories.join(', ') : '—' }}
                   </td>
                   <td>
                     <span class="badge" [class.badge--active]="extra.isActive" [class.badge--inactive]="!extra.isActive">

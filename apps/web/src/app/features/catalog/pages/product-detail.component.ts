@@ -53,7 +53,7 @@ import { FormsModule } from '@angular/forms';
 
             <p class="detail__description">{{ p.description }}</p>
 
-            @if (p.extras?.length) {
+            @if (p.extras.length) {
               <div class="detail__extras">
                 <p class="detail__extras-title">Wensen</p>
                 <div class="detail__extras-list">

@@ -5,10 +5,11 @@ import { OrderItem } from './order-item.entity';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { ProductsModule } from '../products/products.module';
+import { CombosModule } from '../combos/combos.module';
 import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem]), ProductsModule, AuditModule],
+  imports: [TypeOrmModule.forFeature([Order, OrderItem]), ProductsModule, CombosModule, AuditModule],
   providers: [OrdersService],
   controllers: [OrdersController],
   exports: [OrdersService],

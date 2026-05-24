@@ -26,3 +26,18 @@ export interface ProductListDto {
   items: ProductDto[];
   total: number;
 }
+
+export interface ProductComboDto {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  imageUrl: string | null;
+  isActive: boolean;
+  category: string | null;
+  slotCount: number;
+  products: ProductDto[];
+  createdAt: string;
+  updatedAt: string;
+}

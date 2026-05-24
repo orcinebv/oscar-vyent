@@ -19,10 +19,15 @@ export class OrderItem {
   @Column({ type: 'uuid', name: 'order_id' })
   orderId!: string;
 
-  // productId is stored as reference only — name/price are snapshotted below
-  // so the order remains accurate even if the product is later updated.
-  @Column({ type: 'uuid', name: 'product_id' })
-  productId!: string;
+  @Column({ type: 'varchar', length: 10, name: 'item_type', default: 'product' })
+  itemType!: 'product' | 'combo';
+
+  // productId/comboId stored as reference only — name/price snapshotted below.
+  @Column({ type: 'uuid', name: 'product_id', nullable: true })
+  productId!: string | null;
+
+  @Column({ type: 'uuid', name: 'combo_id', nullable: true })
+  comboId!: string | null;
 
   /** Snapshot of product name at time of order — never changes after creation */
   @Column({ type: 'varchar', length: 255 })

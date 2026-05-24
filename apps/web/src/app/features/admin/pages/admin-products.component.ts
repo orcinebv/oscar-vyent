@@ -151,7 +151,7 @@ type FormMode = 'create' | 'edit';
                              [checked]="selectedExtraIds().includes(extra.id)"
                              (change)="toggleExtra(extra.id)" />
                       {{ extra.name }}
-                      @if (extra.defaultForCategories?.length) {
+                      @if (extra.defaultForCategories.length) {
                         <span class="extra__cats">({{ extra.defaultForCategories.join(', ') }})</span>
                       }
                     </label>

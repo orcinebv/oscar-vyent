@@ -23,6 +23,9 @@ import { CartService } from '../../../core/services/cart.service';
           <a routerLink="/beheer/extras" routerLinkActive="active" class="header__nav-link">
             Extras
           </a>
+          <a routerLink="/beheer/combos" routerLinkActive="active" class="header__nav-link">
+            Combinaties
+          </a>
         </nav>
 
         <div class="header__actions">

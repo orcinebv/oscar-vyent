@@ -15,8 +15,17 @@ import {
 import { Type } from 'class-transformer';
 
 export class CreateOrderItemDto {
+  @IsOptional()
   @IsUUID(4)
-  productId!: string;
+  productId?: string;
+
+  @IsOptional()
+  @IsUUID(4)
+  comboId?: string;
+
+  @IsOptional()
+  @IsString()
+  itemType?: 'product' | 'combo';
 
   @IsInt()
   @Min(1)

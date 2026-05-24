@@ -8,6 +8,7 @@ import { DataSource } from 'typeorm';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
 import { Product } from '../modules/products/product.entity';
 import { ProductExtra } from '../modules/extras/product-extra.entity';
+import { ProductCombo } from '../modules/combos/product-combo.entity';
 import { Order } from '../modules/orders/order.entity';
 import { OrderItem } from '../modules/orders/order-item.entity';
 import { Payment } from '../modules/payments/payment.entity';
@@ -29,7 +30,7 @@ export const AppDataSource = new DataSource({
         password: process.env['DB_PASS'] ?? '',
       }),
   ssl: databaseUrl ? { rejectUnauthorized: false } : false,
-  entities: [Product, ProductExtra, Order, OrderItem, Payment, AuditLog],
+  entities: [Product, ProductExtra, ProductCombo, Order, OrderItem, Payment, AuditLog],
   migrations: ['apps/api/src/app/database/migrations/*.ts'],
   namingStrategy: new SnakeNamingStrategy(),
   synchronize: false,

@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppConfig } from '../config/configuration';
 import { Product } from '../modules/products/product.entity';
 import { ProductExtra } from '../modules/extras/product-extra.entity';
+import { ProductCombo } from '../modules/combos/product-combo.entity';
 import { Order } from '../modules/orders/order.entity';
 import { OrderItem } from '../modules/orders/order-item.entity';
 import { Payment } from '../modules/payments/payment.entity';
@@ -25,7 +26,7 @@ import { SnakeNamingStrategy } from './snake-naming.strategy';
           database: db?.name,
           username: db?.user,
           password: db?.pass,
-          entities: [Product, ProductExtra, Order, OrderItem, Payment, AuditLog],
+          entities: [Product, ProductExtra, ProductCombo, Order, OrderItem, Payment, AuditLog],
           migrations: ['dist/apps/api/app/database/migrations/*.js'],
           // synchronize is ALWAYS false — use migrations in all environments
           // to prevent accidental schema drift. See ADR-003.

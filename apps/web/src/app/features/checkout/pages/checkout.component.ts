@@ -136,7 +136,7 @@ const PHONE_PATTERN = /^[+]?[0-9\s\-(). ]{7,20}$/;
                   <span class="summary-item__name">
                     {{ item.product.name }}
                     <span class="summary-item__qty">× {{ item.quantity }}</span>
-                    @if (item.selectedExtras?.length) {
+                    @if (item.selectedExtras.length) {
                       <span class="summary-item__extras">{{ item.selectedExtras.join(', ') }}</span>
                     }
                   </span>
@@ -302,11 +302,19 @@ export class CheckoutComponent implements OnInit {
       shippingCity:       v.shippingCity!,
       shippingCountry:    'NL',
       notes:              v.notes ?? undefined,
-      items: this.cart.items().map((i) => ({
-        productId: i.product.id,
-        quantity: i.quantity,
-        selectedExtras: i.selectedExtras?.length ? i.selectedExtras : undefined,
-      })),
+      items: this.cart.items().map((i) => i.isCombo
+        ? {
+            comboId: i.comboId,
+            itemType: 'combo' as const,
+            quantity: i.quantity,
+            selectedExtras: i.selectedComboItems?.length ? i.selectedComboItems : undefined,
+          }
+        : {
+            productId: i.product.id,
+            itemType: 'product' as const,
+            quantity: i.quantity,
+            selectedExtras: i.selectedExtras?.length ? i.selectedExtras : undefined,
+          }),
     };
 
     this.ordersService
