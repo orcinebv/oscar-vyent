@@ -64,7 +64,8 @@ describe('CartService', () => {
     it('removes a product from the cart', () => {
       const p = mockProduct();
       service.addItem(p);
-      service.removeItem(p.id);
+      const lineId = service.items()[0].lineId;
+      service.removeItem(lineId);
       expect(service.items()).toHaveLength(0);
     });
 
@@ -78,21 +79,24 @@ describe('CartService', () => {
     it('updates the quantity of an existing item', () => {
       const p = mockProduct();
       service.addItem(p, 1);
-      service.updateQuantity(p.id, 5);
+      const lineId = service.items()[0].lineId;
+      service.updateQuantity(lineId, 5);
       expect(service.items()[0].quantity).toBe(5);
     });
 
     it('removes the item when quantity is set to 0', () => {
       const p = mockProduct();
       service.addItem(p, 2);
-      service.updateQuantity(p.id, 0);
+      const lineId = service.items()[0].lineId;
+      service.updateQuantity(lineId, 0);
       expect(service.items()).toHaveLength(0);
     });
 
     it('removes the item when quantity is negative', () => {
       const p = mockProduct();
       service.addItem(p);
-      service.updateQuantity(p.id, -1);
+      const lineId = service.items()[0].lineId;
+      service.updateQuantity(lineId, -1);
       expect(service.items()).toHaveLength(0);
     });
   });

@@ -5,6 +5,7 @@ import { OrdersService } from './orders.service';
 import { Order } from './order.entity';
 import { AuditService } from '../audit/audit.service';
 import { ProductsService } from '../products/products.service';
+import { CombosService } from '../combos/combos.service';
 
 const mockOrder: Order = {
   id: 'order-uuid-1',
@@ -24,11 +25,14 @@ const mockOrder: Order = {
     {
       id: 'item-uuid-1',
       orderId: 'order-uuid-1',
+      itemType: 'product' as const,
       productId: 'product-uuid-1',
+      comboId: null,
       productName: 'Stroopwafel Luxe Blik',
       unitPrice: 12.95,
       quantity: 2,
       totalPrice: 25.90,
+      selectedExtras: null,
       order: null as unknown as Order,
     },
   ],
@@ -65,6 +69,11 @@ const mockProductsService = {
   decrementStock: jest.fn(),
 };
 
+const mockCombosService = {
+  decrementStock: jest.fn(),
+  restoreStock: jest.fn(),
+};
+
 const mockAuditService = {
   log: jest.fn().mockResolvedValue(undefined),
 };
@@ -81,6 +90,7 @@ describe('OrdersService', () => {
         { provide: getRepositoryToken(Order), useValue: mockOrderRepo },
         { provide: getDataSourceToken(), useValue: mockDataSource },
         { provide: ProductsService, useValue: mockProductsService },
+        { provide: CombosService, useValue: mockCombosService },
         { provide: AuditService, useValue: mockAuditService },
       ],
     }).compile();

@@ -255,11 +255,13 @@ export class PaymentsService {
 
     try {
       for (const item of order.items) {
-        await this.productsService.restoreStock(
-          item.productId,
-          item.quantity,
-          queryRunner.manager,
-        );
+        if (item.productId) {
+          await this.productsService.restoreStock(
+            item.productId,
+            item.quantity,
+            queryRunner.manager,
+          );
+        }
       }
       await queryRunner.commitTransaction();
 
