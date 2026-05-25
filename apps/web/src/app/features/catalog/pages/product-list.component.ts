@@ -197,7 +197,6 @@ export class ProductListComponent implements OnInit {
   ngOnInit(): void {
     this.combosService.getAll().subscribe({
       next: (c) => this.combos.set(c),
-      error: () => {},
     });
   }
 
