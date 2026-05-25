@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { CartService } from './cart.service';
-import { ProductDto } from '@oscar-vyent/contracts';
+import { CartService, ComboSlotSelection } from './cart.service';
+import { ProductComboDto, ProductDto } from '@oscar-vyent/contracts';
 
 const mockProduct = (overrides: Partial<ProductDto> = {}): ProductDto => ({
   id: 'product-uuid-1',
@@ -11,6 +11,23 @@ const mockProduct = (overrides: Partial<ProductDto> = {}): ProductDto => ({
   imageUrl: null,
   isActive: true,
   category: null,
+  extras: [],
+  createdAt: '2026-01-01T00:00:00Z',
+  updatedAt: '2026-01-01T00:00:00Z',
+  ...overrides,
+});
+
+const mockCombo = (overrides: Partial<ProductComboDto> = {}): ProductComboDto => ({
+  id: 'combo-uuid-1',
+  name: 'Surinaams Combi',
+  description: 'Een heerlijke combi',
+  price: 18.50,
+  stock: 20,
+  imageUrl: null,
+  isActive: true,
+  category: 'Combis',
+  slotCount: 2,
+  products: [mockProduct({ id: 'p1', name: 'Roti' }), mockProduct({ id: 'p2', name: 'Bakkeljauw' })],
   createdAt: '2026-01-01T00:00:00Z',
   updatedAt: '2026-01-01T00:00:00Z',
   ...overrides,
@@ -101,6 +118,68 @@ describe('CartService', () => {
     });
   });
 
+  describe('addCombo()', () => {
+    it('adds a combo to the cart as a single line item', () => {
+      const combo = mockCombo();
+      const slots: ComboSlotSelection[] = [
+        { productId: 'p1', productName: 'Roti', selectedExtras: [] },
+        { productId: 'p2', productName: 'Bakkeljauw', selectedExtras: [] },
+      ];
+      service.addCombo(combo, slots);
+      expect(service.items()).toHaveLength(1);
+      expect(service.items()[0].isCombo).toBe(true);
+      expect(service.items()[0].comboId).toBe(combo.id);
+      expect(service.items()[0].quantity).toBe(1);
+    });
+
+    it('increments quantity for an identical combo selection', () => {
+      const combo = mockCombo();
+      const slots: ComboSlotSelection[] = [
+        { productId: 'p1', productName: 'Roti', selectedExtras: [] },
+        { productId: 'p2', productName: 'Bakkeljauw', selectedExtras: [] },
+      ];
+      service.addCombo(combo, slots);
+      service.addCombo(combo, slots);
+      expect(service.items()).toHaveLength(1);
+      expect(service.items()[0].quantity).toBe(2);
+    });
+
+    it('creates a separate line for different slot selections of the same combo', () => {
+      const combo = mockCombo();
+      const slots1: ComboSlotSelection[] = [
+        { productId: 'p1', productName: 'Roti', selectedExtras: [] },
+        { productId: 'p2', productName: 'Bakkeljauw', selectedExtras: [] },
+      ];
+      const slots2: ComboSlotSelection[] = [
+        { productId: 'p1', productName: 'Roti', selectedExtras: [] },
+        { productId: 'p1', productName: 'Roti', selectedExtras: [] },
+      ];
+      service.addCombo(combo, slots1);
+      service.addCombo(combo, slots2);
+      expect(service.items()).toHaveLength(2);
+    });
+
+    it('selectedComboItems contains the product names from the slots', () => {
+      const combo = mockCombo();
+      const slots: ComboSlotSelection[] = [
+        { productId: 'p1', productName: 'Roti', selectedExtras: [] },
+        { productId: 'p2', productName: 'Bakkeljauw', selectedExtras: [] },
+      ];
+      service.addCombo(combo, slots);
+      expect(service.items()[0].selectedComboItems).toEqual(['Roti', 'Bakkeljauw']);
+    });
+
+    it('uses combo price for total calculation', () => {
+      const combo = mockCombo({ price: 18.50 });
+      const slots: ComboSlotSelection[] = [
+        { productId: 'p1', productName: 'Roti', selectedExtras: [] },
+        { productId: 'p2', productName: 'Bakkeljauw', selectedExtras: [] },
+      ];
+      service.addCombo(combo, slots, 2);
+      expect(service.total()).toBeCloseTo(37.00, 2);
+    });
+  });
+
   describe('computed values', () => {
     it('count() returns sum of all quantities', () => {
       service.addItem(mockProduct({ id: '1' }), 3);
@@ -112,6 +191,16 @@ describe('CartService', () => {
       service.addItem(mockProduct({ id: '1', price: 10.00 }), 2); // 20.00
       service.addItem(mockProduct({ id: '2', price: 5.50 }),  1); // 5.50
       expect(service.total()).toBeCloseTo(25.50, 2);
+    });
+
+    it('vatAmount() returns 21% BTW component (incl. BTW price)', () => {
+      service.addItem(mockProduct({ id: '1', price: 12.10 }), 1); // incl. 21% BTW
+      expect(service.vatAmount()).toBeCloseTo(12.10 * 21 / 121, 4);
+    });
+
+    it('subtotalExclVat() returns price excluding 21% BTW', () => {
+      service.addItem(mockProduct({ id: '1', price: 12.10 }), 1);
+      expect(service.subtotalExclVat()).toBeCloseTo(12.10 / 1.21, 4);
     });
 
     it('isEmpty() is true when cart is empty', () => {

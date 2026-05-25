@@ -57,4 +57,5 @@ export class CreateProductComboDto {
   @IsArray()
   @IsUUID(4, { each: true })
   productIds?: string[];
+
 }

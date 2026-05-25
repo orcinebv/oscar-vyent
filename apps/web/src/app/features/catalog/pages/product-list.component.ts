@@ -1,6 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { ProductDto, ProductComboDto } from '@oscar-vyent/contracts';
 import { CartService } from '../../../core/services/cart.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -18,7 +20,7 @@ import { ProductsStore } from '../products.store';
     <section class="catalog">
       <div class="container">
         <header class="catalog__header">
-          <h1 class="catalog__title">Onze Producten</h1>
+          <h1 class="catalog__title">{{ activeCategory() ?? 'Onze Producten' }}</h1>
           <p class="catalog__subtitle">Authentieke Surinaamse gerechten, vers bereid met liefde</p>
         </header>
 
@@ -30,11 +32,11 @@ import { ProductsStore } from '../products.store';
             <button class="btn btn-ghost btn-sm" (click)="store.loadProducts()" style="margin-left:8px">Opnieuw proberen</button>
           </div>
         } @else {
-          @if (combos().length > 0) {
+          @if (filteredCombos().length > 0) {
             <div class="catalog__section">
               <h2 class="catalog__section-title">Combinaties</h2>
               <div class="catalog__grid">
-                @for (combo of combos(); track combo.id) {
+                @for (combo of filteredCombos(); track combo.id) {
                   <a class="combo-card" [routerLink]="['/combos', combo.id]">
                     <div class="combo-card__image-wrap">
                       @if (combo.imageUrl) {
@@ -61,13 +63,13 @@ import { ProductsStore } from '../products.store';
             </div>
           }
 
-          @if (store.products().length > 0) {
+          @if (filteredProducts().length > 0) {
             <div class="catalog__section">
-              @if (combos().length > 0) {
+              @if (filteredCombos().length > 0) {
                 <h2 class="catalog__section-title">Losse producten</h2>
               }
               <div class="catalog__grid">
-                @for (product of store.products(); track product.id) {
+                @for (product of filteredProducts(); track product.id) {
                   <ov-product-card
                     [product]="product"
                     (addToCart)="onAddToCart($event)"
@@ -77,7 +79,7 @@ import { ProductsStore } from '../products.store';
             </div>
           }
 
-          @if (store.products().length === 0 && combos().length === 0) {
+          @if (filteredProducts().length === 0 && filteredCombos().length === 0) {
             <div class="catalog__empty">
               <p>Geen producten gevonden.</p>
             </div>
@@ -171,13 +173,31 @@ export class ProductListComponent implements OnInit {
   private readonly cartService = inject(CartService);
   private readonly toast = inject(ToastService);
   private readonly combosService = inject(CombosService);
+  private readonly route = inject(ActivatedRoute);
 
   protected readonly combos = signal<ProductComboDto[]>([]);
+
+  private readonly categoryParam = toSignal(
+    this.route.queryParamMap.pipe(map(p => p.get('category'))),
+    { initialValue: null },
+  );
+
+  protected readonly activeCategory = computed(() => this.categoryParam());
+
+  protected readonly filteredProducts = computed(() => {
+    const cat = this.categoryParam();
+    return cat ? this.store.products().filter(p => p.category === cat) : this.store.products();
+  });
+
+  protected readonly filteredCombos = computed(() => {
+    const cat = this.categoryParam();
+    return cat ? this.combos().filter(c => c.category === cat) : this.combos();
+  });
 
   ngOnInit(): void {
     this.combosService.getAll().subscribe({
       next: (c) => this.combos.set(c),
-      error: () => { /* combos zijn optioneel, stille fout */ },
+      error: () => {},
     });
   }
 

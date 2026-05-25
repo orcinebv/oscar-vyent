@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -12,7 +14,7 @@ import { AppConfig } from './app/config/configuration';
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap');
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // rawBody: true is REQUIRED for Mollie webhook signature verification.
     // The WebhookSignatureGuard reads req.rawBody to compute the HMAC.
     rawBody: true,
@@ -38,6 +40,9 @@ async function bootstrap(): Promise<void> {
     exposedHeaders: ['X-Request-Id'],
     credentials: true,
   });
+
+  // ── Uploaded images — served as static files ────────────────────────────────
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
 
   // ── Global API prefix ───────────────────────────────────────────────────────
   app.setGlobalPrefix('api');

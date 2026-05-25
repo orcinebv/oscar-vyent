@@ -173,6 +173,53 @@ describe('OrdersService', () => {
       await expect(service.create(dto, '127.0.0.1')).rejects.toThrow(NotFoundException);
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
     });
+
+    it('creates an order with a combo item and decrements combo stock', async () => {
+      const combo = { id: 'combo-uuid-1', name: 'Surinaams Combi', price: 18.50, stock: 10, isActive: true };
+      mockQueryRunner.manager.findOne.mockResolvedValue(combo);
+      mockCombosService.decrementStock.mockResolvedValue(undefined);
+      mockQueryRunner.manager.create.mockReturnValue({ id: 'order-uuid-2' });
+      mockQueryRunner.manager.save
+        .mockResolvedValueOnce({ id: 'order-uuid-2', status: 'pending' })
+        .mockResolvedValueOnce([]);
+      mockOrderRepo.findOne.mockResolvedValue({
+        ...mockOrder,
+        id: 'order-uuid-2',
+        items: [{
+          id: 'item-uuid-2',
+          orderId: 'order-uuid-2',
+          itemType: 'combo' as const,
+          comboId: 'combo-uuid-1',
+          productId: null,
+          productName: 'Surinaams Combi',
+          unitPrice: 18.50,
+          quantity: 1,
+          totalPrice: 18.50,
+          selectedExtras: null,
+          order: null as unknown as Order,
+        }],
+      });
+
+      const dto = {
+        customerEmail: 'test@example.nl',
+        customerFirstName: 'Jan',
+        customerLastName: 'de Vries',
+        shippingAddress: 'Keizersgracht 1',
+        shippingPostalCode: '1015 CW',
+        shippingCity: 'Amsterdam',
+        items: [{ comboId: 'combo-uuid-1', itemType: 'combo' as const, quantity: 1 }],
+      };
+
+      const result = await service.create(dto, '127.0.0.1');
+
+      expect(mockCombosService.decrementStock).toHaveBeenCalledWith(
+        'combo-uuid-1',
+        1,
+        mockQueryRunner.manager,
+      );
+      expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(result.items[0].itemType).toBe('combo');
+    });
   });
 
   describe('updateStatus()', () => {

@@ -1,6 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
+import { ProductsService } from '../../../core/services/products.service';
+import { CombosService } from '../../../core/services/combos.service';
 
 @Component({
   selector: 'ov-header',
@@ -14,9 +16,14 @@ import { CartService } from '../../../core/services/cart.service';
         </a>
 
         <nav class="header__nav" role="navigation" aria-label="Hoofdmenu">
-          <a routerLink="/products" routerLinkActive="active" class="header__nav-link">
-            Producten
+          <a routerLink="/products" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="header__nav-link">
+            Alles
           </a>
+          @for (cat of categories(); track cat) {
+            <a [routerLink]="['/products']" [queryParams]="{category: cat}"
+               [class.active]="isCategory(cat)"
+               class="header__nav-link">{{ cat }}</a>
+          }
           <div class="header__dropdown" [class.header__dropdown--active]="isBeheerActive()">
             <span class="header__nav-link header__dropdown-toggle">Beheer ▾</span>
             <ul class="header__dropdown-menu" role="menu">
@@ -205,9 +212,37 @@ import { CartService } from '../../../core/services/cart.service';
     }
   `],
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   protected readonly cart = inject(CartService);
   private readonly router = inject(Router);
+  private readonly productsService = inject(ProductsService);
+  private readonly combosService = inject(CombosService);
+
+  protected readonly categories = signal<string[]>([]);
+
+  ngOnInit(): void {
+    this.productsService.getAll().subscribe({
+      next: (products) => {
+        const fromProducts = products.map(p => p.category).filter((c): c is string => !!c);
+        this.combosService.getAll().subscribe({
+          next: (combos) => {
+            const fromCombos = combos.map(c => c.category).filter((c): c is string => !!c);
+            const all = [...new Set([...fromProducts, ...fromCombos])].sort();
+            this.categories.set(all);
+          },
+          error: () => {
+            const all = [...new Set(fromProducts)].sort();
+            this.categories.set(all);
+          },
+        });
+      },
+      error: () => {},
+    });
+  }
+
+  protected isCategory(cat: string): boolean {
+    return this.router.parseUrl(this.router.url).queryParams['category'] === cat;
+  }
 
   protected isBeheerActive(): boolean {
     return this.router.url.startsWith('/beheer');

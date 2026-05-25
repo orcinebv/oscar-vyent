@@ -1,9 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, of } from 'rxjs';
 import { ProductDto, ProductExtraDto } from '@oscar-vyent/contracts';
 import { ProductsService } from '../../../core/services/products.service';
 import { ExtrasService } from '../../../core/services/extras.service';
+import { UploadService } from '../../../core/services/upload.service';
 
 type FormMode = 'create' | 'edit';
 
@@ -126,7 +127,23 @@ type FormMode = 'create' | 'edit';
 
             <div class="field">
               <label class="field__label" for="imageUrl">Afbeelding URL</label>
-              <input id="imageUrl" class="field__input" formControlName="imageUrl" type="url" />
+              <div class="image-url-field">
+                <input id="imageUrl" class="field__input" formControlName="imageUrl" type="url"
+                       placeholder="https://... of upload een bestand" />
+                <label class="btn btn--ghost btn--sm image-upload__btn" title="Bestand uploaden">
+                  ↑
+                  <input type="file" accept="image/*" (change)="onFileSelected($event)" hidden />
+                </label>
+              </div>
+              @if (imagePreview()) {
+                <div class="image-upload__preview-wrap">
+                  <img [src]="imagePreview()!" alt="Voorvertoning" class="image-upload__preview" />
+                  <button type="button" class="image-upload__clear" (click)="clearImage()" title="Verwijderen">✕</button>
+                </div>
+              }
+              @if (uploadError()) {
+                <span class="field__error">{{ uploadError() }}</span>
+              }
             </div>
 
             <div class="field field--checkbox">
@@ -448,11 +465,42 @@ type FormMode = 'create' | 'edit';
       color: var(--color-text-tertiary);
       margin-left: var(--space-1);
     }
+
+    .image-url-field { display: flex; gap: var(--space-2); }
+    .image-url-field .field__input { flex: 1; }
+    .image-upload__btn { cursor: pointer; flex-shrink: 0; font-size: var(--font-size-base); }
+    .image-upload__preview-wrap { position: relative; display: inline-block; margin-top: var(--space-2); }
+    .image-upload__preview {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      display: block;
+    }
+    .image-upload__clear {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
   `],
 })
 export class AdminProductsComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly extrasService = inject(ExtrasService);
+  private readonly uploadService = inject(UploadService);
   private readonly fb = inject(FormBuilder);
 
   products = signal<ProductDto[]>([]);
@@ -466,6 +514,9 @@ export class AdminProductsComponent implements OnInit {
   mode = signal<FormMode>('create');
   saving = signal(false);
   saveError = signal<string | null>(null);
+  imagePreview = signal<string | null>(null);
+  uploadError = signal<string | null>(null);
+  private pendingFile = signal<File | null>(null);
   private editingId = signal<string | null>(null);
 
   form = this.fb.group({
@@ -501,9 +552,12 @@ export class AdminProductsComponent implements OnInit {
   openCreate(): void {
     this.mode.set('create');
     this.editingId.set(null);
-    this.form.reset({ isActive: true, stock: 0, price: null });
+    this.form.reset({ isActive: true, stock: 0, price: null, imageUrl: '' });
     this.selectedExtraIds.set([]);
     this.saveError.set(null);
+    this.imagePreview.set(null);
+    this.pendingFile.set(null);
+    this.uploadError.set(null);
     this.showModal.set(true);
   }
 
@@ -521,7 +575,28 @@ export class AdminProductsComponent implements OnInit {
     });
     this.selectedExtraIds.set((product.extras ?? []).map((e) => e.id));
     this.saveError.set(null);
+    this.imagePreview.set(product.imageUrl ?? null);
+    this.pendingFile.set(null);
+    this.uploadError.set(null);
     this.showModal.set(true);
+  }
+
+  onFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.uploadError.set(null);
+    this.pendingFile.set(file);
+    const reader = new FileReader();
+    reader.onload = (e) => this.imagePreview.set(e.target?.result as string);
+    reader.readAsDataURL(file);
+    // Reset input so the same file can be re-selected
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  clearImage(): void {
+    this.imagePreview.set(null);
+    this.pendingFile.set(null);
+    this.form.patchValue({ imageUrl: '' });
   }
 
   toggleExtra(extraId: string): void {
@@ -552,21 +627,25 @@ export class AdminProductsComponent implements OnInit {
     this.saveError.set(null);
 
     const raw = this.form.getRawValue();
-    const dto = {
-      name: raw.name!,
-      description: raw.description!,
-      price: Number(raw.price),
-      stock: Number(raw.stock),
-      imageUrl: raw.imageUrl || null,
-      category: raw.category || null,
-      isActive: raw.isActive ?? true,
-    };
+    const upload$ = this.pendingFile()
+      ? this.uploadService.uploadImage(this.pendingFile()!)
+      : of({ url: raw.imageUrl || null });
 
-    const request$ = this.mode() === 'create'
-      ? this.productsService.create(dto)
-      : this.productsService.update(this.editingId()!, dto);
-
-    request$.pipe(
+    upload$.pipe(
+      switchMap(({ url }) => {
+        const dto = {
+          name: raw.name!,
+          description: raw.description!,
+          price: Number(raw.price),
+          stock: Number(raw.stock),
+          imageUrl: url || null,
+          category: raw.category || null,
+          isActive: raw.isActive ?? true,
+        };
+        return this.mode() === 'create'
+          ? this.productsService.create(dto)
+          : this.productsService.update(this.editingId()!, dto);
+      }),
       switchMap((product) =>
         this.productsService.setExtras(product.id, this.selectedExtraIds()),
       ),

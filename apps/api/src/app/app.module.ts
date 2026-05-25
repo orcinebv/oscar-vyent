@@ -9,6 +9,7 @@ import { CombosModule } from './modules/combos/combos.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { UploadModule } from './modules/upload/upload.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -25,6 +26,7 @@ import { HealthController } from './health.controller';
 
     DatabaseModule,
     AuditModule,
+    UploadModule,
     ExtrasModule,
     CombosModule,
     ProductsModule,
