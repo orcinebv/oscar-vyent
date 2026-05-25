@@ -236,7 +236,6 @@ export class HeaderComponent implements OnInit {
           },
         });
       },
-      error: () => {},
     });
   }
 

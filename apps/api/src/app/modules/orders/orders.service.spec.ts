@@ -210,7 +210,7 @@ describe('OrdersService', () => {
         items: [{ comboId: 'combo-uuid-1', itemType: 'combo' as const, quantity: 1 }],
       };
 
-      const result = await service.create(dto, '127.0.0.1');
+      const order = await service.create(dto, '127.0.0.1');
 
       expect(mockCombosService.decrementStock).toHaveBeenCalledWith(
         'combo-uuid-1',
@@ -218,7 +218,7 @@ describe('OrdersService', () => {
         mockQueryRunner.manager,
       );
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
-      expect(result.items[0].itemType).toBe('combo');
+      expect(order.items[0].itemType).toBe('combo');
     });
   });
 
