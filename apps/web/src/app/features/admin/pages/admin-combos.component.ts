@@ -396,9 +396,10 @@ export class AdminCombosComponent implements OnInit {
         this.showModal.set(false);
         this.load();
       },
-      error: (err) => {
+      error: (err: unknown) => {
         this.saving.set(false);
-        const msg = err?.error?.message;
+        const httpErr = err as { error?: { message?: string | string[] } };
+        const msg = httpErr?.error?.message;
         this.saveError.set(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Er is een fout opgetreden.'));
       },
     });
