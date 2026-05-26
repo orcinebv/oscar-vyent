@@ -7,7 +7,13 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { mkdirSync } from 'fs';
 import { extname, join } from 'path';
+
+const uploadDest = (): string =>
+  process.env['NODE_ENV'] === 'production'
+    ? '/tmp/uploads'
+    : join(process.cwd(), 'uploads');
 
 @Controller('upload')
 export class UploadController {
@@ -15,7 +21,11 @@ export class UploadController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: join(process.cwd(), 'uploads'),
+        destination: (_req, _file, cb) => {
+          const dest = uploadDest();
+          mkdirSync(dest, { recursive: true });
+          cb(null, dest);
+        },
         filename: (_req, file, cb) => {
           const ext = extname(file.originalname).toLowerCase();
           cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
