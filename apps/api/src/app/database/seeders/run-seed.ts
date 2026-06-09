@@ -6,6 +6,8 @@ import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import { Product } from '../../modules/products/product.entity';
+import { ProductExtra } from '../../modules/extras/product-extra.entity';
+import { ProductCombo } from '../../modules/combos/product-combo.entity';
 import { Order } from '../../modules/orders/order.entity';
 import { OrderItem } from '../../modules/orders/order-item.entity';
 import { Payment } from '../../modules/payments/payment.entity';
@@ -31,7 +33,7 @@ const ds = new DataSource({
   ssl: process.env['DB_SSL'] === 'true' || databaseUrl?.includes('sslmode=require')
     ? { rejectUnauthorized: false }
     : false,
-  entities: [Product, Order, OrderItem, Payment, AuditLog],
+  entities: [Product, ProductExtra, ProductCombo, Order, OrderItem, Payment, AuditLog],
   namingStrategy: new SnakeNamingStrategy(),
   synchronize: false,
 });
@@ -49,12 +51,80 @@ const SEED_PRODUCTS = [
   { name: 'Broodje Pom', description: 'Knapperig broodje gevuld met warme pom. Dé Surinaamse klassieker om mee te nemen.', price: 6.50, stock: 80, imageUrl: '/assets/products/broodje-pom.png', category: 'Broodjes', isActive: true },
 ];
 
+const SEED_EXTRAS = [
+  { name: 'Extra Sambal',        isActive: true, defaultForCategories: ['Hoofdgerechten', 'Snacks', 'Broodjes'] },
+  { name: 'Extra Rijst',         isActive: true, defaultForCategories: ['Hoofdgerechten'] },
+  { name: 'Gebakken Ei',         isActive: true, defaultForCategories: ['Hoofdgerechten'] },
+  { name: 'Kroepoek',            isActive: true, defaultForCategories: ['Hoofdgerechten', 'Soepen'] },
+  { name: 'Atjar',               isActive: true, defaultForCategories: ['Hoofdgerechten'] },
+  { name: 'Extra Tamarinde Saus',isActive: true, defaultForCategories: ['Snacks', 'Broodjes'] },
+];
+
+// Each combo references products by name; slotCount = how many the customer picks
+const SEED_COMBOS = [
+  {
+    name: 'Surinaamse Maaltijdbox',
+    description: 'Kies 2 klassieke Surinaamse hoofdgerechten naar keuze. Perfect voor een gezellige maaltijd of om te delen.',
+    price: 22.50,
+    stock: 40,
+    imageUrl: '/assets/combos/maaltijdbox.png',
+    category: 'Combinaties',
+    isActive: true,
+    slotCount: 2,
+    productNames: ['Pom', 'Roti met Kerrie Kip', 'Moksi Alesi', 'Nasi Goreng', 'Bami Goreng', 'Bruine Bonen met Rijst'],
+  },
+  {
+    name: 'Snack & Soep Deal',
+    description: 'Een warme Saoto Soep gecombineerd met een portie Bara. De ideale lunchcombo.',
+    price: 11.00,
+    stock: 60,
+    imageUrl: '/assets/combos/snack-soep.png',
+    category: 'Combinaties',
+    isActive: true,
+    slotCount: 2,
+    productNames: ['Saoto Soep', 'Bara (6 stuks)'],
+  },
+  {
+    name: 'Broodje & Snack Combo',
+    description: 'Een Broodje Pom met een knapperige Baka Bana erbij. Snel, lekker en typisch Surinaams.',
+    price: 9.50,
+    stock: 50,
+    imageUrl: '/assets/combos/broodje-snack.png',
+    category: 'Combinaties',
+    isActive: true,
+    slotCount: 2,
+    productNames: ['Broodje Pom', 'Baka Bana'],
+  },
+];
+
 async function main(): Promise<void> {
   await ds.initialize();
-  const repo = ds.getRepository(Product);
-  await repo.clear();
-  await repo.save(SEED_PRODUCTS.map(p => repo.create(p)));
-  console.log(`Seeded ${SEED_PRODUCTS.length} demo products`);
+
+  // Clear in dependency order (extras map and combo items cascade via FK)
+  await ds.query('TRUNCATE TABLE product_combos CASCADE');
+  await ds.query('TRUNCATE TABLE product_extras CASCADE');
+  await ds.query('TRUNCATE TABLE products CASCADE');
+
+  // Seed products
+  const productRepo = ds.getRepository(Product);
+  const savedProducts = await productRepo.save(SEED_PRODUCTS.map(p => productRepo.create(p)));
+  console.log(`Seeded ${savedProducts.length} products`);
+
+  // Seed extras
+  const extraRepo = ds.getRepository(ProductExtra);
+  await extraRepo.save(SEED_EXTRAS.map(e => extraRepo.create(e)));
+  console.log(`Seeded ${SEED_EXTRAS.length} extras`);
+
+  // Seed combos (with linked products)
+  const comboRepo = ds.getRepository(ProductCombo);
+  const productsByName = new Map(savedProducts.map(p => [p.name, p]));
+
+  for (const { productNames, ...comboData } of SEED_COMBOS) {
+    const combo = comboRepo.create(comboData);
+    combo.products = productNames.map(n => productsByName.get(n)!).filter(Boolean);
+    await comboRepo.save(combo);
+  }
+  console.log(`Seeded ${SEED_COMBOS.length} combos`);
 }
 
 main()

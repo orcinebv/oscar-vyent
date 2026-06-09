@@ -1,6 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { finalize } from 'rxjs';
 import { OrderDto, OrderStatus } from '@oscar-vyent/contracts';
 import { OrdersService } from '../../../core/services/orders.service';
@@ -31,7 +31,7 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
 @Component({
   selector: 'ov-order-status',
   standalone: true,
-  imports: [RouterLink, CurrencyPipe, DatePipe, LoadingSpinnerComponent],
+  imports: [RouterLink, CurrencyPipe, DatePipe, DecimalPipe, LoadingSpinnerComponent],
   template: `
     <div class="container">
       @if (loading()) {
@@ -44,11 +44,18 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
 
           <header class="order-header">
             <div>
-              <h1 class="order-title">Bestelling #{{ o.id.slice(0, 8).toUpperCase() }}</h1>
+              <h1 class="order-title">Bestelling</h1>
               <p class="order-date">Geplaatst op {{ o.createdAt | date:'d MMMM yyyy, HH:mm':'':'nl' }}</p>
             </div>
             <span class="badge {{ statusBadge(o.status) }}">{{ statusLabel(o.status) }}</span>
           </header>
+
+          @if (o.orderNumber) {
+            <div class="volgnummer-banner">
+              <span class="volgnummer-banner__label">Uw volgnummer</span>
+              <span class="volgnummer-banner__number">{{ o.orderNumber | number:'3.0-0' }}</span>
+            </div>
+          }
 
           <div class="order-layout">
             <!-- Items -->
@@ -74,15 +81,12 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
 
             <!-- Details -->
             <aside>
-              <section class="card order-details-section" aria-labelledby="details-heading">
-                <h2 id="details-heading" class="section-title">Bezorggegevens</h2>
-                <address class="order-address">
-                  {{ o.customerFirstName }} {{ o.customerLastName }}<br/>
-                  {{ o.shippingAddress }}<br/>
-                  {{ o.shippingPostalCode }} {{ o.shippingCity }}<br/>
-                  {{ o.shippingCountry }}
-                </address>
-              </section>
+              @if (o.notes) {
+                <section class="card order-details-section" aria-labelledby="details-heading">
+                  <h2 id="details-heading" class="section-title">Opmerkingen</h2>
+                  <p class="order-notes">{{ o.notes }}</p>
+                </section>
+              }
 
               @if (o.status === 'paid' || o.status === 'processing' || o.status === 'shipped') {
                 <section class="card order-steps-section" aria-labelledby="steps-heading" style="margin-top: var(--space-4)">
@@ -140,7 +144,32 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
     .order-item__price { font-weight: var(--font-weight-medium); }
     .order-total { display: flex; justify-content: space-between; font-size: var(--font-size-lg); }
 
-    .order-address { font-style: normal; font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: var(--line-height-loose); }
+    .order-notes { font-size: var(--font-size-sm); color: var(--color-text-secondary); white-space: pre-wrap; }
+
+    .volgnummer-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-6);
+      background: var(--color-success-surface);
+      border: 2px solid var(--color-success);
+      border-radius: var(--radius-xl);
+      padding: var(--space-5) var(--space-8);
+      margin-bottom: var(--space-8);
+    }
+    .volgnummer-banner__label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .volgnummer-banner__number {
+      font-size: 3rem;
+      font-weight: var(--font-weight-bold);
+      color: var(--color-success);
+      line-height: 1;
+    }
 
     .progress-steps { display: flex; flex-direction: column; gap: var(--space-3); }
     .progress-step { display: flex; align-items: center; gap: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted); }

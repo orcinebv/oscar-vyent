@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PaymentsService } from '../../../core/services/payments.service';
 import { PaymentStatusDto } from '@oscar-vyent/contracts';
+import { DecimalPipe } from '@angular/common';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 type ReturnState = 'polling' | 'paid' | 'failed' | 'timeout';
@@ -10,7 +11,7 @@ type ReturnState = 'polling' | 'paid' | 'failed' | 'timeout';
 @Component({
   selector: 'ov-payment-return',
   standalone: true,
-  imports: [RouterLink, LoadingSpinnerComponent],
+  imports: [RouterLink, DecimalPipe, LoadingSpinnerComponent],
   template: `
     <div class="container">
       <div class="return-wrap">
@@ -27,8 +28,16 @@ type ReturnState = 'polling' | 'paid' | 'failed' | 'timeout';
             <div class="return-card card return-card--success">
               <div class="return-icon" aria-hidden="true">✓</div>
               <h1 class="return-title">Betaling gelukt!</h1>
-              <p class="return-subtitle">Uw bestelling is bevestigd. U ontvangt een bevestiging per e-mail.</p>
-              <a [routerLink]="['/orders', orderId()]" class="btn btn-primary btn-lg">Bestelling bekijken</a>
+
+              @if (orderNumber()) {
+                <div class="volgnummer-wrap">
+                  <p class="volgnummer-label">Uw volgnummer</p>
+                  <span class="volgnummer">{{ orderNumber()! | number:'3.0-0' }}</span>
+                  <p class="volgnummer-hint">Laat dit nummer zien bij het ophalen van uw bestelling.</p>
+                </div>
+              }
+
+              <a [routerLink]="['/orders', orderId()]" class="btn btn-secondary btn-lg">Bestelling bekijken</a>
             </div>
           }
 
@@ -50,7 +59,6 @@ type ReturnState = 'polling' | 'paid' | 'failed' | 'timeout';
               <h1 class="return-title">Betaling wordt verwerkt</h1>
               <p class="return-subtitle">
                 Wij hebben uw betaling nog niet ontvangen. Dit kan een moment duren.
-                U ontvangt een bevestiging per e-mail zodra de betaling is verwerkt.
               </p>
               @if (orderId()) {
                 <a [routerLink]="['/orders', orderId()]" class="btn btn-secondary btn-lg">Bestelling bekijken</a>
@@ -99,6 +107,40 @@ type ReturnState = 'polling' | 'paid' | 'failed' | 'timeout';
     .return-subtitle { color: var(--color-text-secondary); line-height: var(--line-height-normal); max-width: 380px; }
     .return-hint { font-size: var(--font-size-sm); color: var(--color-text-muted); }
 
+    .volgnummer-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+      background: var(--color-surface-subtle);
+      border: 2px solid var(--color-success);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6) var(--space-10);
+      width: 100%;
+    }
+
+    .volgnummer-label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0;
+    }
+
+    .volgnummer {
+      font-size: 4rem;
+      font-weight: var(--font-weight-bold);
+      color: var(--color-success);
+      line-height: 1;
+    }
+
+    .volgnummer-hint {
+      font-size: var(--font-size-xs);
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
     .return-actions { display: flex; gap: var(--space-4); flex-wrap: wrap; justify-content: center; }
   `],
 })
@@ -109,6 +151,7 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
 
   protected readonly state = signal<ReturnState>('polling');
   protected readonly orderId = signal<string | null>(null);
+  protected readonly orderNumber = signal<number | null>(null);
   protected readonly errorMessage = signal<string>('De betaling is niet geslaagd. Probeer het opnieuw.');
 
   private pollSub?: Subscription;
@@ -121,7 +164,6 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
     this.orderId.set(oid);
 
     if (!pid) {
-      // No paymentId — can't poll; show timeout state
       this.state.set('timeout');
       return;
     }
@@ -131,6 +173,7 @@ export class PaymentReturnComponent implements OnInit, OnDestroy {
     this.pollSub = this.paymentsService.pollUntilResolved(pid).subscribe({
       next: (status: PaymentStatusDto) => {
         if (status.status === 'paid') {
+          this.orderNumber.set(status.orderNumber ?? null);
           this.state.set('paid');
         } else if (['failed', 'expired', 'canceled'].includes(status.status)) {
           const msgs: Record<string, string> = {

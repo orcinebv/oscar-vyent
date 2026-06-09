@@ -31,13 +31,13 @@ export interface OrderItemDto {
 }
 
 export interface CreateOrderDto {
-  customerEmail: string;
-  customerFirstName: string;
-  customerLastName: string;
+  customerEmail?: string;
+  customerFirstName?: string;
+  customerLastName?: string;
   customerPhone?: string;
-  shippingAddress: string;
-  shippingPostalCode: string;
-  shippingCity: string;
+  shippingAddress?: string;
+  shippingPostalCode?: string;
+  shippingCity?: string;
   shippingCountry?: string;
   notes?: string;
   items: CreateOrderItemDto[];
@@ -45,13 +45,14 @@ export interface CreateOrderDto {
 
 export interface OrderDto {
   id: string;
-  customerEmail: string;
-  customerFirstName: string;
-  customerLastName: string;
+  orderNumber: number | null;
+  customerEmail: string | null;
+  customerFirstName: string | null;
+  customerLastName: string | null;
   customerPhone: string | null;
-  shippingAddress: string;
-  shippingPostalCode: string;
-  shippingCity: string;
+  shippingAddress: string | null;
+  shippingPostalCode: string | null;
+  shippingCity: string | null;
   shippingCountry: string;
   status: OrderStatus;
   totalAmount: number;

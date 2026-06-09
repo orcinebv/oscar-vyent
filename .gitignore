@@ -43,3 +43,4 @@ logs/
 .claude/settings.local.json
 .vercel
 .env*.local
+.gstack/

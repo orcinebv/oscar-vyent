@@ -9,6 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
+import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { createMollieClient, MollieClient, PaymentMethod, PaymentStatus as MolliePaymentStatus, Payment as MolliePayment } from '@mollie/api-client';
 import { Payment, PaymentStatus, TERMINAL_PAYMENT_STATUSES } from './payment.entity';
@@ -76,8 +77,13 @@ export class PaymentsService {
     const baseUrl = this.config.get('app', { infer: true })?.baseUrl;
     const frontendUrl = this.config.get('app', { infer: true })?.frontendUrl;
 
-    const webhookUrl = `${baseUrl}/api/payments/webhook`;
-    const redirectUrl = `${frontendUrl}/payment/return?orderId=${order.id}`;
+    // Pre-generate the payment ID so it can be included in the redirect URL
+    // that Mollie uses to send the customer back after payment.
+    const paymentId = randomUUID();
+
+    const isPublicUrl = baseUrl && !baseUrl.includes('localhost') && !baseUrl.includes('127.0.0.1');
+    const webhookUrl = isPublicUrl ? `${baseUrl}/api/payments/webhook` : undefined;
+    const redirectUrl = `${frontendUrl}/payment/return?orderId=${order.id}&paymentId=${paymentId}`;
 
     // Mollie requires exactly 2 decimal places as a string
     const amountValue = Number(order.totalAmount).toFixed(2);
@@ -91,12 +97,16 @@ export class PaymentsService {
         method: PaymentMethod.ideal,
         description: `Order ${order.id.slice(0, 8).toUpperCase()} — Oscar Vyent`,
         redirectUrl,
-        webhookUrl,
+        ...(webhookUrl ? { webhookUrl } : {}),
         metadata: { orderId: order.id },
       });
     } catch (err) {
-      this.logger.error(`Mollie payment creation failed for order=${order.id}: ${String(err)}`);
-      throw new BadGatewayException('Betaalverwerker niet beschikbaar. Probeer het later opnieuw.');
+      const e = err as Record<string, unknown>;
+      const detail = err instanceof Error
+        ? `${err.message} | field=${e['field'] ?? ''} | status=${e['status'] ?? ''}`
+        : String(err);
+      this.logger.error(`Mollie payment creation failed for order=${order.id}: ${detail}`);
+      throw new BadGatewayException(`Betaalverwerker niet beschikbaar: ${detail}`);
     }
 
     const checkoutUrl = molliePayment._links.checkout?.href ?? null;
@@ -105,6 +115,7 @@ export class PaymentsService {
     }
 
     const payment = this.paymentRepo.create({
+      id: paymentId,
       orderId: order.id,
       molliePaymentId: molliePayment.id,
       method: dto.method ?? 'ideal',
@@ -112,7 +123,7 @@ export class PaymentsService {
       amount: Number(order.totalAmount),
       currency: 'EUR',
       checkoutUrl,
-      webhookUrl,
+      webhookUrl: webhookUrl ?? null,
       redirectUrl,
     });
 
@@ -242,6 +253,7 @@ export class PaymentsService {
     return {
       paymentId: payment.id,
       orderId: payment.orderId,
+      orderNumber: payment.order?.orderNumber ?? null,
       status: payment.status,
       orderStatus: payment.order?.status ?? 'unknown',
     };

@@ -42,26 +42,29 @@ export class Order {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  customerEmail!: string;
+  @Column({ type: 'int', unique: true, nullable: true })
+  orderNumber!: number | null;
 
-  @Column({ type: 'varchar', length: 100 })
-  customerFirstName!: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  customerEmail!: string | null;
 
-  @Column({ type: 'varchar', length: 100 })
-  customerLastName!: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  customerFirstName!: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  customerLastName!: string | null;
 
   @Column({ type: 'varchar', length: 30, nullable: true })
   customerPhone!: string | null;
 
-  @Column({ type: 'text' })
-  shippingAddress!: string;
+  @Column({ type: 'text', nullable: true })
+  shippingAddress!: string | null;
 
-  @Column({ type: 'varchar', length: 10 })
-  shippingPostalCode!: string;
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  shippingPostalCode!: string | null;
 
-  @Column({ type: 'varchar', length: 100 })
-  shippingCity!: string;
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  shippingCity!: string | null;
 
   @Column({ type: 'varchar', length: 2, default: 'NL' })
   shippingCountry!: string;

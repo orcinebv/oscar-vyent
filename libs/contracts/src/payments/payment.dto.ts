@@ -30,6 +30,7 @@ export interface PaymentDto {
 export interface PaymentStatusDto {
   paymentId: string;
   orderId: string;
+  orderNumber: number | null;
   status: PaymentStatus;
   orderStatus: string;
 }

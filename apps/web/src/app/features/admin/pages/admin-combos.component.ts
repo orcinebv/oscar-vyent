@@ -30,6 +30,7 @@ type FormMode = 'create' | 'edit';
           <table class="table">
             <thead>
               <tr>
+                <th></th>
                 <th>Naam</th>
                 <th>Categorie</th>
                 <th>Prijs</th>
@@ -43,6 +44,11 @@ type FormMode = 'create' | 'edit';
             <tbody>
               @for (combo of combos(); track combo.id) {
                 <tr [class.row--inactive]="!combo.isActive">
+                  <td class="table__img-cell">
+                    @if (combo.imageUrl) {
+                      <img [src]="combo.imageUrl" [alt]="combo.name" class="table__img" />
+                    }
+                  </td>
                   <td class="table__name">{{ combo.name }}</td>
                   <td>{{ combo.category ?? '—' }}</td>
                   <td>{{ formatPrice(combo.price) }}</td>
@@ -61,7 +67,7 @@ type FormMode = 'create' | 'edit';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="8" class="table__empty">Geen combinaties gevonden.</td>
+                  <td colspan="9" class="table__empty">Geen combinaties gevonden.</td>
                 </tr>
               }
             </tbody>
@@ -203,6 +209,8 @@ type FormMode = 'create' | 'edit';
     .table tr:last-child td { border-bottom: none; }
     .row--inactive td { opacity: 0.5; }
     .table__name { font-weight: var(--font-weight-medium); }
+    .table__img-cell { width: 48px; padding: var(--space-1) var(--space-2); }
+    .table__img { width: 40px; height: 40px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--color-border); display: block; }
     .table__actions { display: flex; gap: var(--space-2); }
     .table__empty { text-align: center; color: var(--color-text-secondary); padding: var(--space-8); }
 

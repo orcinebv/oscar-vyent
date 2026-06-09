@@ -29,7 +29,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node_modules/.bin/ts-node --transpile-only --project apps/api/tsconfig.app.json apps/api/src/main.ts",
+        "command": "node node_modules/ts-node/dist/bin.js --transpile-only --project apps/api/tsconfig.app.json apps/api/src/main.ts",
         "cwd": "{workspaceRoot}"
       }
     },
@@ -57,28 +57,28 @@
     "migration:run": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:run -d apps/api/src/app/database/data-source.ts",
+        "command": "node node_modules/ts-node/dist/bin.js --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register node_modules/typeorm/cli.js migration:run -d apps/api/src/app/database/data-source.ts",
         "cwd": "{workspaceRoot}"
       }
     },
     "migration:generate": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:generate apps/api/src/app/database/migrations/Migration -d apps/api/src/app/database/data-source.ts",
+        "command": "node node_modules/ts-node/dist/bin.js --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register node_modules/typeorm/cli.js migration:generate apps/api/src/app/database/migrations/Migration -d apps/api/src/app/database/data-source.ts",
         "cwd": "{workspaceRoot}"
       }
     },
     "migration:revert": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:revert -d apps/api/src/app/database/data-source.ts",
+        "command": "node node_modules/ts-node/dist/bin.js --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register node_modules/typeorm/cli.js migration:revert -d apps/api/src/app/database/data-source.ts",
         "cwd": "{workspaceRoot}"
       }
     },
     "seed": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "ts-node --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register apps/api/src/app/database/seeders/run-seed.ts",
+        "command": "node node_modules/ts-node/dist/bin.js --project apps/api/tsconfig.scripts.json -r tsconfig-paths/register apps/api/src/app/database/seeders/run-seed.ts",
         "cwd": "{workspaceRoot}"
       }
     }

@@ -95,16 +95,21 @@ export class OrdersService {
 
       const totalAmount = orderItems.reduce((sum, i) => sum + (i.totalPrice ?? 0), 0);
 
+      const [{ nextval: orderNumber }] = await queryRunner.query(
+        `SELECT nextval('order_number_seq') AS nextval`,
+      );
+
       const order = queryRunner.manager.create(Order, {
-        customerEmail: dto.customerEmail,
-        customerFirstName: dto.customerFirstName,
-        customerLastName: dto.customerLastName,
-        customerPhone: dto.customerPhone ?? null,
-        shippingAddress: dto.shippingAddress,
-        shippingPostalCode: dto.shippingPostalCode,
-        shippingCity: dto.shippingCity,
-        shippingCountry: dto.shippingCountry ?? 'NL',
-        notes: dto.notes ?? null,
+        orderNumber: Number(orderNumber),
+        customerEmail:      null,
+        customerFirstName:  null,
+        customerLastName:   null,
+        customerPhone:      null,
+        shippingAddress:    null,
+        shippingPostalCode: null,
+        shippingCity:       null,
+        shippingCountry:    'NL',
+        notes:              null,
         status: 'pending',
         totalAmount,
         currency: 'EUR',
@@ -118,7 +123,7 @@ export class OrdersService {
 
       await queryRunner.commitTransaction();
 
-      this.logger.log(`Order created: id=${savedOrder.id} total=${totalAmount} customer=${dto.customerEmail}`);
+      this.logger.log(`Order created: id=${savedOrder.id} #${savedOrder.orderNumber} total=${totalAmount}`);
 
       // Audit is fire-and-forget — outside the transaction
       void this.auditService.log({
@@ -128,7 +133,6 @@ export class OrdersService {
         actorType: 'customer',
         actorIp: clientIp,
         metadata: {
-          email: dto.customerEmail,
           itemCount: dto.items.length,
           totalAmount,
           currency: 'EUR',
