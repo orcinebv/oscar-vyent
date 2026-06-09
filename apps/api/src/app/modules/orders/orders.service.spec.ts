@@ -9,6 +9,7 @@ import { CombosService } from '../combos/combos.service';
 
 const mockOrder: Order = {
   id: 'order-uuid-1',
+  orderNumber: 1001,
   customerEmail: 'test@example.nl',
   customerFirstName: 'Jan',
   customerLastName: 'de Vries',
@@ -47,6 +48,7 @@ const mockQueryRunner = {
   commitTransaction: jest.fn(),
   rollbackTransaction: jest.fn(),
   release: jest.fn(),
+  query: jest.fn().mockResolvedValue([{ nextval: '1001' }]),
   manager: {
     findOne: jest.fn(),
     create: jest.fn(),
