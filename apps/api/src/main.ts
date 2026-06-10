@@ -1,3 +1,8 @@
+// Load env file before NestJS initializes — overrides NX's dotenv-expand
+// which would corrupt values containing $ signs (e.g. bcrypt hashes).
+import * as dotenv from 'dotenv';
+dotenv.config({ path: 'apps/api/.env', override: true });
+
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
