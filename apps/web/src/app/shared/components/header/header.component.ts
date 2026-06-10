@@ -16,9 +16,6 @@ import { CombosService } from '../../../core/services/combos.service';
         </a>
 
         <nav class="header__nav" role="navigation" aria-label="Hoofdmenu">
-          <a routerLink="/products" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="header__nav-link">
-            Alles
-          </a>
           @for (cat of categories(); track cat) {
             <a [routerLink]="['/products']" [queryParams]="{category: cat}"
                [class.active]="isCategory(cat)"

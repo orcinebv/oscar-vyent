@@ -3,9 +3,7 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { ProductDto, ProductComboDto } from '@oscar-vyent/contracts';
-import { CartService } from '../../../core/services/cart.service';
-import { ToastService } from '../../../core/services/toast.service';
+import { ProductComboDto } from '@oscar-vyent/contracts';
 import { CombosService } from '../../../core/services/combos.service';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
@@ -70,10 +68,7 @@ import { ProductsStore } from '../products.store';
               }
               <div class="catalog__grid">
                 @for (product of filteredProducts(); track product.id) {
-                  <ov-product-card
-                    [product]="product"
-                    (addToCart)="onAddToCart($event)"
-                  />
+                  <ov-product-card [product]="product" />
                 }
               </div>
             </div>
@@ -170,8 +165,6 @@ import { ProductsStore } from '../products.store';
 })
 export class ProductListComponent implements OnInit {
   protected readonly store = inject(ProductsStore);
-  private readonly cartService = inject(CartService);
-  private readonly toast = inject(ToastService);
   private readonly combosService = inject(CombosService);
   private readonly route = inject(ActivatedRoute);
 
@@ -200,8 +193,4 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  protected onAddToCart(product: ProductDto): void {
-    this.cartService.addItem(product);
-    this.toast.success(`"${product.name}" is toegevoegd aan uw winkelwagen.`);
-  }
 }

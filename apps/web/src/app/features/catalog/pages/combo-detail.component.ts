@@ -101,8 +101,6 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 
               <div class="detail__trust">
                 <div class="trust-item"><span>🔒</span><span>Veilig betalen via iDEAL</span></div>
-                <div class="trust-item"><span>📦</span><span>Snelle bezorging in Nederland</span></div>
-                <div class="trust-item"><span>↩</span><span>14 dagen retourrecht</span></div>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import {CurrencyPipe, JsonPipe} from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { ProductDto } from '@oscar-vyent/contracts';
 
 @Component({
@@ -49,20 +49,10 @@ import { ProductDto } from '@oscar-vyent/contracts';
             @if (product.stock > 0 && product.stock <= 10) {
               <span class="product-card__low-stock">Nog {{ product.stock }} op voorraad</span>
             }
+            @if (product.stock === 0) {
+              <span class="product-card__low-stock">Uitverkocht</span>
+            }
           </div>
-
-          <button
-            type="button"
-            class="btn btn-primary btn-sm product-card__btn"
-            [disabled]="product.stock === 0"
-            (click)="onAddToCart()"
-            [attr.aria-label]="'Voeg ' + product.name + ' toe aan winkelwagen'"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            {{ product.stock === 0 ? 'Uitverkocht' : 'In winkelwagen' }}
-          </button>
         </div>
       </div>
     </article>
@@ -183,9 +173,4 @@ import { ProductDto } from '@oscar-vyent/contracts';
 })
 export class ProductCardComponent {
   @Input({ required: true }) product!: ProductDto;
-  @Output() addToCart = new EventEmitter<ProductDto>();
-
-  onAddToCart(): void {
-    this.addToCart.emit(this.product);
-  }
 }
