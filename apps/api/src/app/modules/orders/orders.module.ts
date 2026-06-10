@@ -7,9 +7,10 @@ import { OrdersController } from './orders.controller';
 import { ProductsModule } from '../products/products.module';
 import { CombosModule } from '../combos/combos.module';
 import { AuditModule } from '../audit/audit.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem]), ProductsModule, CombosModule, AuditModule],
+  imports: [TypeOrmModule.forFeature([Order, OrderItem]), ProductsModule, CombosModule, AuditModule, MailModule],
   providers: [OrdersService],
   controllers: [OrdersController],
   exports: [OrdersService],

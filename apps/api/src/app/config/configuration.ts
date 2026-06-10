@@ -26,6 +26,19 @@ export const configuration = () => ({
       .split(',')
       .map((o) => o.trim()),
   },
+
+  mail: {
+    host: process.env['MAIL_HOST'] ?? 'smtp.gmail.com',
+    port: parseInt(process.env['MAIL_PORT'] ?? '587', 10),
+    user: process.env['MAIL_USER'] ?? '',
+    pass: process.env['MAIL_PASS'] ?? '',
+    from: process.env['MAIL_FROM'] ?? process.env['MAIL_USER'] ?? 'noreply@oscar-vyent.nl',
+    to: process.env['MAIL_TO'] ?? 'orcinebv@gmail.com',
+  },
+
+  admin: {
+    apiKey: process.env['ADMIN_API_KEY'] ?? '',
+  },
 });
 
 export type AppConfig = ReturnType<typeof configuration>;

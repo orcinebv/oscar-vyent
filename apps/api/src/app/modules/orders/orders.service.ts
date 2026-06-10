@@ -14,6 +14,7 @@ import { ProductCombo } from '../combos/product-combo.entity';
 import { ProductsService } from '../products/products.service';
 import { CombosService } from '../combos/combos.service';
 import { AuditService } from '../audit/audit.service';
+import { MailService } from '../mail/mail.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AuditActorType } from '@oscar-vyent/contracts';
 
@@ -29,6 +30,7 @@ export class OrdersService {
     private readonly productsService: ProductsService,
     private readonly combosService: CombosService,
     private readonly auditService: AuditService,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -125,7 +127,12 @@ export class OrdersService {
 
       this.logger.log(`Order created: id=${savedOrder.id} #${savedOrder.orderNumber} total=${totalAmount}`);
 
-      // Audit is fire-and-forget — outside the transaction
+      // Reload with items for the response and mail
+      const fullOrder = await this.findOne(savedOrder.id);
+
+      // Fire-and-forget: mail + audit — outside the transaction
+      void this.mailService.sendOrderNotification(fullOrder);
+
       void this.auditService.log({
         action: 'order_created',
         entityType: 'order',
@@ -139,8 +146,7 @@ export class OrdersService {
         },
       });
 
-      // Reload with items for the response
-      return this.findOne(savedOrder.id);
+      return fullOrder;
     } catch (err) {
       await queryRunner.rollbackTransaction();
       this.logger.error(`Order creation failed, transaction rolled back: ${String(err)}`);
@@ -173,6 +179,15 @@ export class OrdersService {
    * Updates order status, enforcing the allowed state machine transitions.
    * Throws BadRequestException for invalid transitions.
    */
+  async resetOrderSequence(startAt = 1): Promise<{ nextValue: number }> {
+    await this.dataSource.query(
+      `SELECT setval('order_number_seq', $1, false)`,
+      [startAt],
+    );
+    this.logger.log(`order_number_seq gereset — volgende waarde: ${startAt}`);
+    return { nextValue: startAt };
+  }
+
   async updateStatus(
     id: string,
     newStatus: OrderStatus,
