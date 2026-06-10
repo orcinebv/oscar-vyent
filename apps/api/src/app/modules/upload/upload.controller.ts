@@ -50,12 +50,20 @@ export class UploadController {
     console.log('[upload] VERCEL=', process.env['VERCEL'], 'HAS_TOKEN=', !!token);
 
     if (token) {
-      const blob = await put(filename, file.buffer, {
-        access: 'public',
-        contentType: file.mimetype,
-        token,
-      });
-      return { url: blob.url };
+      // Ensure the library auto-reads the token from the standard env var name
+      process.env['BLOB_READ_WRITE_TOKEN'] = token;
+      try {
+        const blob = await put(filename, file.buffer, {
+          access: 'public',
+          contentType: file.mimetype,
+        });
+        console.log('[upload] Blob upload gelukt:', blob.url);
+        return { url: blob.url };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('[upload] Blob put() fout:', msg);
+        throw new InternalServerErrorException(`Blob opslag fout: ${msg}`);
+      }
     }
 
     if (onVercel()) {
