@@ -6,21 +6,16 @@ import {
   Param,
   ParseUUIDPipe,
   Ip,
-  Headers,
-  ForbiddenException,
+  UseGuards,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Order } from './order.entity';
-import { AppConfig } from '../../config/configuration';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(
-    private readonly ordersService: OrdersService,
-    private readonly config: ConfigService<AppConfig>,
-  ) {}
+  constructor(private readonly ordersService: OrdersService) {}
 
   /** Create a new order. Stock is decremented atomically. */
   @Post()
@@ -36,16 +31,12 @@ export class OrdersController {
     return this.ordersService.findOne(id);
   }
 
-  /** Reset the order number sequence. Requires x-admin-key header. */
+  /** Reset the order number sequence. Requires valid JWT. */
   @Post('admin/reset-sequence')
+  @UseGuards(JwtAuthGuard)
   async resetSequence(
-    @Headers('x-admin-key') key: string,
     @Body() body: { startAt?: number },
   ): Promise<{ nextValue: number }> {
-    const adminKey = this.config.get('admin', { infer: true })?.apiKey;
-    if (!adminKey || key !== adminKey) {
-      throw new ForbiddenException('Ongeldig admin sleutel');
-    }
     return this.ordersService.resetOrderSequence(body.startAt ?? 1);
   }
 }

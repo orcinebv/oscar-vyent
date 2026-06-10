@@ -12,12 +12,14 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { IsArray, IsUUID } from 'class-validator';
 import { ProductsService } from './products.service';
 import { Product } from './product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 class SetExtrasDto {
   @IsArray()
@@ -42,11 +44,13 @@ export class ProductsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   async create(@Body() dto: CreateProductDto): Promise<Product> {
     return this.productsService.create(dto);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   async update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateProductDto,
@@ -55,6 +59,7 @@ export class ProductsController {
   }
 
   @Put(':id/extras')
+  @UseGuards(JwtAuthGuard)
   async setExtras(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: SetExtrasDto,
@@ -63,6 +68,7 @@ export class ProductsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): Promise<void> {
     return this.productsService.remove(id);

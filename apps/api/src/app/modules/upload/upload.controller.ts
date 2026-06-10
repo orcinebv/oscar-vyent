@@ -5,7 +5,9 @@ import {
   UploadedFile,
   BadRequestException,
   InternalServerErrorException,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { mkdirSync, writeFileSync } from 'fs';
@@ -27,6 +29,7 @@ const onVercel = (): boolean => !!process.env['VERCEL'];
 @Controller('upload')
 export class UploadController {
   @Post('image')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),

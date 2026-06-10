@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -53,7 +54,16 @@ export const routes: Routes = [
     title: 'Bestelling — Oscar Vyent',
   },
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/admin/pages/admin-login.component').then(
+        (m) => m.AdminLoginComponent,
+      ),
+    title: 'Inloggen — Oscar Vyent',
+  },
+  {
     path: 'beheer',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/admin/pages/admin-products.component').then(
         (m) => m.AdminProductsComponent,
@@ -62,6 +72,7 @@ export const routes: Routes = [
   },
   {
     path: 'beheer/extras',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/admin/pages/admin-extras.component').then(
         (m) => m.AdminExtrasComponent,
@@ -70,6 +81,7 @@ export const routes: Routes = [
   },
   {
     path: 'beheer/combos',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/admin/pages/admin-combos.component').then(
         (m) => m.AdminCombosComponent,
@@ -78,6 +90,7 @@ export const routes: Routes = [
   },
   {
     path: 'beheer/instellingen',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/admin/pages/admin-instellingen.component').then(
         (m) => m.AdminInstellingenComponent,

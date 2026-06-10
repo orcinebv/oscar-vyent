@@ -11,11 +11,13 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { CombosService } from './combos.service';
 import { ProductCombo } from './product-combo.entity';
 import { CreateProductComboDto } from './dto/create-product-combo.dto';
 import { UpdateProductComboDto } from './dto/update-product-combo.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('combos')
 export class CombosController {
@@ -36,11 +38,13 @@ export class CombosController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateProductComboDto): Promise<ProductCombo> {
     return this.combosService.create(dto);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateProductComboDto,
@@ -49,6 +53,7 @@ export class CombosController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,

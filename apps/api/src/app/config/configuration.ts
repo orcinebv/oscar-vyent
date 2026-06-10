@@ -38,6 +38,13 @@ export const configuration = () => ({
 
   admin: {
     apiKey: process.env['ADMIN_API_KEY'] ?? '',
+    username: process.env['ADMIN_USERNAME'] ?? 'admin',
+    passwordHash: process.env['ADMIN_PASSWORD_HASH'] ?? '',
+  },
+
+  jwt: {
+    secret: process.env['JWT_SECRET'] ?? 'change-me-in-production',
+    expiresIn: process.env['JWT_EXPIRES_IN'] ?? '8h',
   },
 });
 

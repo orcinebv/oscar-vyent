@@ -9,11 +9,13 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ExtrasService } from './extras.service';
 import { ProductExtra } from './product-extra.entity';
 import { CreateProductExtraDto } from './dto/create-product-extra.dto';
 import { UpdateProductExtraDto } from './dto/update-product-extra.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('extras')
 export class ExtrasController {
@@ -30,11 +32,13 @@ export class ExtrasController {
   }
 
   @Post()
+  @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateProductExtraDto): Promise<ProductExtra> {
     return this.extrasService.create(dto);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard)
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateProductExtraDto,
@@ -43,6 +47,7 @@ export class ExtrasController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string): Promise<void> {
     return this.extrasService.remove(id);

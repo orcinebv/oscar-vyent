@@ -1,35 +1,19 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { AdminSettingsService } from '../../../core/services/admin-settings.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'ov-admin-instellingen',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <div class="admin">
       <div class="admin__header">
         <h1 class="admin__title">Instellingen</h1>
+        <button class="btn btn--ghost" (click)="logout()">Uitloggen</button>
       </div>
-
-      <!-- Admin sleutel -->
-      <section class="card">
-        <h2 class="card__title">Admin toegang</h2>
-        <p class="card__desc">Voer hier de admin sleutel in om wijzigingen op te slaan. De sleutel wordt lokaal opgeslagen in de browser.</p>
-        <div class="field-row">
-          <input
-            class="field__input"
-            type="password"
-            [(ngModel)]="adminKeyInput"
-            placeholder="Admin sleutel"
-            autocomplete="off"
-          />
-          <button class="btn btn--primary" (click)="saveAdminKey()">Opslaan</button>
-        </div>
-        @if (adminKeySaved()) {
-          <p class="feedback feedback--ok">Sleutel opgeslagen.</p>
-        }
-      </section>
 
       <!-- E-mail instellingen -->
       <section class="card">
@@ -140,9 +124,7 @@ import { AdminSettingsService } from '../../../core/services/admin-settings.serv
 })
 export class AdminInstellingenComponent implements OnInit {
   private readonly adminSettings = inject(AdminSettingsService);
-
-  protected adminKeyInput = signal('');
-  protected adminKeySaved = signal(false);
+  private readonly auth = inject(AuthService);
 
   protected mailTo = signal('');
   protected loadingSettings = signal(true);
@@ -154,8 +136,11 @@ export class AdminInstellingenComponent implements OnInit {
   protected resetFeedback = signal('');
   protected resetOk = signal(false);
 
+  protected logout(): void {
+    this.auth.logout();
+  }
+
   ngOnInit(): void {
-    this.adminKeyInput.set(this.adminSettings.adminKey);
     this.adminSettings.getSettings().subscribe({
       next: (s) => {
         this.mailTo.set(s['mail.to'] ?? 'orcinebv@gmail.com');
@@ -163,12 +148,6 @@ export class AdminInstellingenComponent implements OnInit {
       },
       error: () => this.loadingSettings.set(false),
     });
-  }
-
-  protected saveAdminKey(): void {
-    this.adminSettings.adminKey = this.adminKeyInput();
-    this.adminKeySaved.set(true);
-    setTimeout(() => this.adminKeySaved.set(false), 3000);
   }
 
   protected saveMail(): void {
