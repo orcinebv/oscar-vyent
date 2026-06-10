@@ -46,7 +46,7 @@ export class UploadController {
     // Local dev: write to disk
     const dest = join(process.cwd(), 'uploads');
     mkdirSync(dest, { recursive: true });
-    writeFileSync(join(dest, filename), file.buffer);
+    writeFileSync(join(dest, filename), new Uint8Array(file.buffer));
     return { url: `/uploads/${filename}` };
   }
 }
