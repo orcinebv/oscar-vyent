@@ -6,6 +6,7 @@ import { Order } from './order.entity';
 import { AuditService } from '../audit/audit.service';
 import { ProductsService } from '../products/products.service';
 import { CombosService } from '../combos/combos.service';
+import { MailService } from '../mail/mail.service';
 
 const mockOrder: Order = {
   id: 'order-uuid-1',
@@ -59,6 +60,7 @@ const mockQueryRunner = {
 
 const mockDataSource = {
   createQueryRunner: jest.fn(() => mockQueryRunner),
+  query: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockOrderRepo = {
@@ -80,6 +82,10 @@ const mockAuditService = {
   log: jest.fn().mockResolvedValue(undefined),
 };
 
+const mockMailService = {
+  sendOrderNotification: jest.fn().mockResolvedValue(undefined),
+};
+
 describe('OrdersService', () => {
   let service: OrdersService;
 
@@ -94,6 +100,7 @@ describe('OrdersService', () => {
         { provide: ProductsService, useValue: mockProductsService },
         { provide: CombosService, useValue: mockCombosService },
         { provide: AuditService, useValue: mockAuditService },
+        { provide: MailService, useValue: mockMailService },
       ],
     }).compile();
 
@@ -134,6 +141,7 @@ describe('OrdersService', () => {
         mockQueryRunner.manager,
       );
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
+      expect(mockMailService.sendOrderNotification).toHaveBeenCalledWith(mockOrder);
       expect(result.id).toBe('order-uuid-1');
     });
 
@@ -157,6 +165,7 @@ describe('OrdersService', () => {
       await expect(service.create(dto, '127.0.0.1')).rejects.toThrow(ConflictException);
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.commitTransaction).not.toHaveBeenCalled();
+      expect(mockMailService.sendOrderNotification).not.toHaveBeenCalled();
     });
 
     it('throws NotFoundException when product does not exist', async () => {
@@ -221,6 +230,28 @@ describe('OrdersService', () => {
       );
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
       expect(order.items[0].itemType).toBe('combo');
+    });
+  });
+
+  describe('resetOrderSequence()', () => {
+    it('resets the sequence to the given start value', async () => {
+      const result = await service.resetOrderSequence(500);
+
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT setval('order_number_seq', $1, false)`,
+        [500],
+      );
+      expect(result).toEqual({ nextValue: 500 });
+    });
+
+    it('defaults to 1 when no start value is provided', async () => {
+      const result = await service.resetOrderSequence();
+
+      expect(mockDataSource.query).toHaveBeenCalledWith(
+        `SELECT setval('order_number_seq', $1, false)`,
+        [1],
+      );
+      expect(result).toEqual({ nextValue: 1 });
     });
   });
 
