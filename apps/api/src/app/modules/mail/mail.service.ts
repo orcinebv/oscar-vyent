@@ -2,18 +2,22 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { AppConfig } from '../../config/configuration';
+import { SettingsService } from '../settings/settings.service';
 import { Order } from '../orders/order.entity';
 
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
   private readonly transporter: nodemailer.Transporter;
-  private readonly to: string;
+  private readonly defaultTo: string;
   private readonly from: string;
 
-  constructor(private readonly config: ConfigService<AppConfig>) {
+  constructor(
+    private readonly config: ConfigService<AppConfig>,
+    private readonly settingsService: SettingsService,
+  ) {
     const mail = config.get('mail', { infer: true })!;
-    this.to = mail.to;
+    this.defaultTo = mail.to;
     this.from = mail.from;
 
     this.transporter = nodemailer.createTransport({
@@ -29,6 +33,9 @@ export class MailService {
       this.logger.warn('MAIL_USER niet ingesteld — e-mail overgeslagen');
       return;
     }
+
+    const mailToFromDb = await this.settingsService.get('mail.to');
+    const to = mailToFromDb ?? this.defaultTo;
 
     const itemRows = order.items
       .map(
@@ -88,11 +95,11 @@ export class MailService {
     try {
       await this.transporter.sendMail({
         from: this.from,
-        to: this.to,
+        to,
         subject: `Nieuwe bestelling #${order.orderNumber ?? order.id.slice(0, 8)} — €${Number(order.totalAmount).toFixed(2)}`,
         html,
       });
-      this.logger.log(`Bestelling e-mail verstuurd naar ${this.to} voor order #${order.orderNumber}`);
+      this.logger.log(`Bestelling e-mail verstuurd naar ${to} voor order #${order.orderNumber}`);
     } catch (err) {
       this.logger.error(`E-mail versturen mislukt: ${String(err)}`);
     }

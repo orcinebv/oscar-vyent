@@ -9,6 +9,7 @@ import { Order } from '../modules/orders/order.entity';
 import { OrderItem } from '../modules/orders/order-item.entity';
 import { Payment } from '../modules/payments/payment.entity';
 import { AuditLog } from '../modules/audit/audit-log.entity';
+import { AppSetting } from '../modules/settings/app-setting.entity';
 import { SnakeNamingStrategy } from './snake-naming.strategy';
 
 @Module({
@@ -26,7 +27,7 @@ import { SnakeNamingStrategy } from './snake-naming.strategy';
           database: db?.name,
           username: db?.user,
           password: db?.pass,
-          entities: [Product, ProductExtra, ProductCombo, Order, OrderItem, Payment, AuditLog],
+          entities: [Product, ProductExtra, ProductCombo, Order, OrderItem, Payment, AuditLog, AppSetting],
           migrations: ['dist/apps/api/app/database/migrations/*.js'],
           // synchronize is ALWAYS false — use migrations in all environments
           // to prevent accidental schema drift. See ADR-003.

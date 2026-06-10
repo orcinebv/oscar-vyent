@@ -77,6 +77,14 @@ export const routes: Routes = [
     title: 'Combinaties Beheer — Oscar Vyent',
   },
   {
+    path: 'beheer/instellingen',
+    loadComponent: () =>
+      import('./features/admin/pages/admin-instellingen.component').then(
+        (m) => m.AdminInstellingenComponent,
+      ),
+    title: 'Instellingen — Oscar Vyent',
+  },
+  {
     path: 'combos/:id',
     loadComponent: () =>
       import('./features/catalog/pages/combo-detail.component').then(

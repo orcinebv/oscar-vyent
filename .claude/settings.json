@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Angular:', d['version']\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Angular version:', d['version']\\)\")",
+      "Bash(node node_modules/.bin/nx --version)",
+      "Bash(npm install *)",
+      "Bash(npm cache *)",
+      "Bash(cat /c/Users/patri/AppData/Local/npm-cache/_logs/2026-06-09T09_33_28_885Z-debug-0.log 2>/dev/null | tail -50)",
+      "Read(//c/Users/patri/AppData/Local/npm-cache/_logs/**)"
+    ]
+  }
+}

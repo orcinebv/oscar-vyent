@@ -36,6 +36,10 @@ import { CombosService } from '../../../core/services/combos.service';
                 <a routerLink="/beheer/combos" routerLinkActive="active"
                    class="header__dropdown-item" role="menuitem">Combinaties</a>
               </li>
+              <li>
+                <a routerLink="/beheer/instellingen" routerLinkActive="active"
+                   class="header__dropdown-item" role="menuitem">Instellingen</a>
+              </li>
             </ul>
           </div>
         </nav>
