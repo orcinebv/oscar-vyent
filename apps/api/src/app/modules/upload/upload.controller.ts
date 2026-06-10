@@ -6,31 +6,19 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { mkdirSync } from 'fs';
+import { memoryStorage } from 'multer';
+import { mkdirSync, writeFileSync } from 'fs';
 import { extname, join } from 'path';
+import { put } from '@vercel/blob';
 
-const uploadDest = (): string =>
-  process.env['NODE_ENV'] === 'production'
-    ? '/tmp/uploads'
-    : join(process.cwd(), 'uploads');
+const useVercelBlob = (): boolean => !!process.env['BLOB_READ_WRITE_TOKEN'];
 
 @Controller('upload')
 export class UploadController {
   @Post('image')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: (_req, _file, cb) => {
-          const dest = uploadDest();
-          mkdirSync(dest, { recursive: true });
-          cb(null, dest);
-        },
-        filename: (_req, file, cb) => {
-          const ext = extname(file.originalname).toLowerCase();
-          cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-        },
-      }),
+      storage: memoryStorage(),
       fileFilter: (_req, file, cb) => {
         if (file.mimetype.match(/^image\/(jpeg|jpg|png|gif|webp|avif)$/)) {
           cb(null, true);
@@ -41,8 +29,24 @@ export class UploadController {
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   )
-  uploadImage(@UploadedFile() file: Express.Multer.File): { url: string } {
+  async uploadImage(@UploadedFile() file: Express.Multer.File): Promise<{ url: string }> {
     if (!file) throw new BadRequestException('Geen bestand geüpload');
-    return { url: `/uploads/${file.filename}` };
+
+    const ext = extname(file.originalname).toLowerCase();
+    const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+
+    if (useVercelBlob()) {
+      const blob = await put(filename, file.buffer, {
+        access: 'public',
+        contentType: file.mimetype,
+      });
+      return { url: blob.url };
+    }
+
+    // Local dev: write to disk
+    const dest = join(process.cwd(), 'uploads');
+    mkdirSync(dest, { recursive: true });
+    writeFileSync(join(dest, filename), file.buffer);
+    return { url: `/uploads/${filename}` };
   }
 }

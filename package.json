@@ -39,6 +39,7 @@
     "@nestjs/throttler": "^5.1.0",
     "@nestjs/typeorm": "^10.0.2",
     "@ngrx/signals": "^21.1.0",
+    "@vercel/blob": "^2.4.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "compression": "^1.7.4",
