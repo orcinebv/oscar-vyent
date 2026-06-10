@@ -12,7 +12,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { extname, join } from 'path';
 import { put } from '@vercel/blob';
 
-const isProduction = (): boolean => process.env['NODE_ENV'] === 'production';
+const onVercel = (): boolean => !!process.env['VERCEL'];
 const useVercelBlob = (): boolean => !!process.env['BLOB_READ_WRITE_TOKEN'];
 
 @Controller('upload')
@@ -37,6 +37,9 @@ export class UploadController {
     const ext = extname(file.originalname).toLowerCase();
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
 
+    // Debug: log token presence (not value)
+    console.log('[upload] VERCEL=', process.env['VERCEL'], 'HAS_BLOB_TOKEN=', !!process.env['BLOB_READ_WRITE_TOKEN']);
+
     if (useVercelBlob()) {
       const blob = await put(filename, file.buffer, {
         access: 'public',
@@ -45,7 +48,7 @@ export class UploadController {
       return { url: blob.url };
     }
 
-    if (isProduction()) {
+    if (onVercel()) {
       throw new InternalServerErrorException(
         'Opslag niet geconfigureerd: voeg een Vercel Blob Store toe aan dit project.',
       );
