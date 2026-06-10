@@ -4,6 +4,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -11,6 +12,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { extname, join } from 'path';
 import { put } from '@vercel/blob';
 
+const isProduction = (): boolean => process.env['NODE_ENV'] === 'production';
 const useVercelBlob = (): boolean => !!process.env['BLOB_READ_WRITE_TOKEN'];
 
 @Controller('upload')
@@ -41,6 +43,12 @@ export class UploadController {
         contentType: file.mimetype,
       });
       return { url: blob.url };
+    }
+
+    if (isProduction()) {
+      throw new InternalServerErrorException(
+        'Opslag niet geconfigureerd: voeg een Vercel Blob Store toe aan dit project.',
+      );
     }
 
     // Local dev: write to disk
