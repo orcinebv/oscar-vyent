@@ -1,18 +1,15 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { AdminSettingsService } from '../../../core/services/admin-settings.service';
-import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'ov-admin-instellingen',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   template: `
     <div class="admin">
       <div class="admin__header">
         <h1 class="admin__title">Instellingen</h1>
-        <button class="btn btn--ghost" (click)="logout()">Uitloggen</button>
       </div>
 
       <!-- E-mail instellingen -->
@@ -124,7 +121,6 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class AdminInstellingenComponent implements OnInit {
   private readonly adminSettings = inject(AdminSettingsService);
-  private readonly auth = inject(AuthService);
 
   protected mailTo = signal('');
   protected loadingSettings = signal(true);
@@ -135,10 +131,6 @@ export class AdminInstellingenComponent implements OnInit {
   protected resetting = signal(false);
   protected resetFeedback = signal('');
   protected resetOk = signal(false);
-
-  protected logout(): void {
-    this.auth.logout();
-  }
 
   ngOnInit(): void {
     this.adminSettings.getSettings().subscribe({

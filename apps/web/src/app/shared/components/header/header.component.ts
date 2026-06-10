@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CartService } from '../../../core/services/cart.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { CombosService } from '../../../core/services/combos.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'ov-header',
@@ -40,6 +41,13 @@ import { CombosService } from '../../../core/services/combos.service';
                 <a routerLink="/beheer/instellingen" routerLinkActive="active"
                    class="header__dropdown-item" role="menuitem">Instellingen</a>
               </li>
+              @if (auth.isLoggedIn()) {
+                <li>
+                  <button class="header__dropdown-item header__dropdown-item--btn" (click)="logout()" role="menuitem">
+                    Uitloggen
+                  </button>
+                </li>
+              }
             </ul>
           </div>
         </nav>
@@ -173,6 +181,20 @@ import { CombosService } from '../../../core/services/combos.service';
       color: var(--color-accent);
     }
 
+    .header__dropdown-item--btn {
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-top: 1px solid var(--color-border);
+      color: #dc2626;
+    }
+    .header__dropdown-item--btn:hover {
+      background: #fef2f2;
+      color: #991b1b;
+    }
+
     .header__actions { margin-left: auto; }
 
     .header__cart {
@@ -215,6 +237,7 @@ import { CombosService } from '../../../core/services/combos.service';
 })
 export class HeaderComponent implements OnInit {
   protected readonly cart = inject(CartService);
+  protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly productsService = inject(ProductsService);
   private readonly combosService = inject(CombosService);
@@ -246,5 +269,9 @@ export class HeaderComponent implements OnInit {
 
   protected isBeheerActive(): boolean {
     return this.router.url.startsWith('/beheer');
+  }
+
+  protected logout(): void {
+    this.auth.logout();
   }
 }
