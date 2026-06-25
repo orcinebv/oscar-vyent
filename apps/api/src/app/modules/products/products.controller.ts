@@ -27,6 +27,12 @@ class SetExtrasDto {
   extraIds!: string[];
 }
 
+class ReorderProductsDto {
+  @IsArray()
+  @IsUUID(4, { each: true })
+  ids!: string[];
+}
+
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
@@ -47,6 +53,13 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard)
   async create(@Body() dto: CreateProductDto): Promise<Product> {
     return this.productsService.create(dto);
+  }
+
+  @Put('sort-order')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async reorder(@Body() dto: ReorderProductsDto): Promise<void> {
+    return this.productsService.reorder(dto.ids);
   }
 
   @Patch(':id')

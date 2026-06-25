@@ -35,6 +35,9 @@ export class Product {
   @Column({ type: 'varchar', length: 100, nullable: true })
   category!: string | null;
 
+  @Column({ type: 'int', default: 0, name: 'sort_order' })
+  sortOrder!: number;
+
   @ManyToMany(() => ProductExtra, (e) => e.products, { eager: false })
   @JoinTable({
     name: 'product_extras_map',

@@ -39,4 +39,8 @@ export class ProductsService {
   setExtras(productId: string, extraIds: string[]): Observable<ProductDto> {
     return this.http.put<ProductDto>(`${this.base}/${productId}/extras`, { extraIds });
   }
+
+  reorder(ids: string[]): Observable<void> {
+    return this.http.put<void>(`${this.base}/sort-order`, { ids });
+  }
 }
