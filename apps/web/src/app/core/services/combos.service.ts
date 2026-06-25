@@ -33,4 +33,8 @@ export class CombosService {
   delete(id: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}`);
   }
+
+  reorder(ids: string[]): Observable<void> {
+    return this.http.put<void>(`${this.base}/sort-order`, { ids });
+  }
 }

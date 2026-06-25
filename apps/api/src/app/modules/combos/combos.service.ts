@@ -26,8 +26,12 @@ export class CombosService {
     return this.comboRepo.find({
       where: includeInactive ? undefined : { isActive: true },
       relations: ['products', 'products.extras'],
-      order: { createdAt: 'DESC' },
+      order: { sortOrder: 'ASC', createdAt: 'ASC' },
     });
+  }
+
+  async reorder(ids: string[]): Promise<void> {
+    await Promise.all(ids.map((id, index) => this.comboRepo.update(id, { sortOrder: index })));
   }
 
   async findOne(id: string): Promise<ProductCombo> {

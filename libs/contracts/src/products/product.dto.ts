@@ -6,6 +6,7 @@ export interface ProductExtraDto {
   name: string;
   isActive: boolean;
   defaultForCategories: string[];
+  sortOrder?: number;
 }
 
 export interface ProductDto {
@@ -38,6 +39,7 @@ export interface ProductComboDto {
   isActive: boolean;
   category: string | null;
   slotCount: number;
+  sortOrder?: number;
   products: ProductDto[];
   createdAt: string;
   updatedAt: string;

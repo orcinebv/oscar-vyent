@@ -13,7 +13,11 @@ export class ExtrasService {
   ) {}
 
   findAll(): Promise<ProductExtra[]> {
-    return this.extrasRepo.find({ order: { name: 'ASC' } });
+    return this.extrasRepo.find({ order: { sortOrder: 'ASC', name: 'ASC' } });
+  }
+
+  async reorder(ids: string[]): Promise<void> {
+    await Promise.all(ids.map((id, index) => this.extrasRepo.update(id, { sortOrder: index })));
   }
 
   async findOne(id: string): Promise<ProductExtra> {

@@ -10,14 +10,22 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { IsArray, IsUUID } from 'class-validator';
 import { CombosService } from './combos.service';
 import { ProductCombo } from './product-combo.entity';
 import { CreateProductComboDto } from './dto/create-product-combo.dto';
 import { UpdateProductComboDto } from './dto/update-product-combo.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+class ReorderCombosDto {
+  @IsArray()
+  @IsUUID(4, { each: true })
+  ids!: string[];
+}
 
 @Controller('combos')
 export class CombosController {
@@ -41,6 +49,13 @@ export class CombosController {
   @UseGuards(JwtAuthGuard)
   create(@Body() dto: CreateProductComboDto): Promise<ProductCombo> {
     return this.combosService.create(dto);
+  }
+
+  @Put('sort-order')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async reorder(@Body() dto: ReorderCombosDto): Promise<void> {
+    return this.combosService.reorder(dto.ids);
   }
 
   @Patch(':id')

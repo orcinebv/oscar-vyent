@@ -39,6 +39,9 @@ export class ProductCombo {
   @Column({ type: 'int', default: 2, name: 'slot_count' })
   slotCount!: number;
 
+  @Column({ type: 'int', default: 0, name: 'sort_order' })
+  sortOrder!: number;
+
   @ManyToMany(() => Product, { eager: false })
   @JoinTable({
     name: 'product_combo_items',

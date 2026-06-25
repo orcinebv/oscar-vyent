@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ProductExtraDto } from '@oscar-vyent/contracts';
 import { ExtrasService } from '../../../core/services/extras.service';
@@ -23,19 +23,38 @@ type FormMode = 'create' | 'edit';
       @if (loading()) {
         <p class="admin__loading">Laden...</p>
       } @else {
+        @if (reordering()) {
+          <p class="admin__saving">Volgorde opslaan...</p>
+        }
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
+                <th class="th--handle"></th>
                 <th>Naam</th>
                 <th>Standaard voor categorieën</th>
                 <th>Actief</th>
                 <th>Acties</th>
               </tr>
             </thead>
-            <tbody>
-              @for (extra of extras(); track extra.id) {
-                <tr [class.row--inactive]="!extra.isActive">
+            <tbody [class.is-dragging]="dragIndex() !== null">
+              @for (extra of extras(); track extra.id; let i = $index) {
+                <tr [class.row--inactive]="!extra.isActive"
+                    [class.row--dragging]="dragIndex() === i"
+                    [class.row--drag-over]="dragOverIndex() === i && dragIndex() !== i"
+                    draggable="true"
+                    (dragstart)="onDragStart($event, i)"
+                    (dragover)="onDragOver($event, i)"
+                    (dragleave)="onDragLeave($event)"
+                    (drop)="onDrop($event, i)"
+                    (dragend)="onDragEnd()">
+                  <td class="table__drag-handle">
+                    <svg class="drag-icon" width="14" height="20" viewBox="0 0 14 20" fill="currentColor">
+                      <circle cx="4" cy="4" r="1.5"/><circle cx="10" cy="4" r="1.5"/>
+                      <circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/>
+                      <circle cx="4" cy="16" r="1.5"/><circle cx="10" cy="16" r="1.5"/>
+                    </svg>
+                  </td>
                   <td class="table__name">{{ extra.name }}</td>
                   <td class="table__cats">
                     {{ extra.defaultForCategories.length ? extra.defaultForCategories.join(', ') : '—' }}
@@ -52,7 +71,7 @@ type FormMode = 'create' | 'edit';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="table__empty">Geen extras gevonden. Maak een nieuwe aan.</td>
+                  <td colspan="5" class="table__empty">Geen extras gevonden. Maak een nieuwe aan.</td>
                 </tr>
               }
             </tbody>
@@ -145,6 +164,7 @@ type FormMode = 'create' | 'edit';
     }
     .admin__subtitle a { color: var(--color-primary); }
     .admin__loading { color: var(--color-text-secondary); text-align: center; padding: var(--space-12); }
+    .admin__saving { color: var(--color-text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--space-2); }
 
     .table-wrap { overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); }
     .table { width: 100%; border-collapse: collapse; font-size: var(--font-size-sm); }
@@ -152,6 +172,13 @@ type FormMode = 'create' | 'edit';
     .table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border); vertical-align: middle; }
     .table tr:last-child td { border-bottom: none; }
     .row--inactive td { opacity: 0.5; }
+    .row--dragging { opacity: 0.4; }
+    .row--drag-over td { border-top: 2px solid var(--color-primary); }
+    .table tbody.is-dragging td, .table tbody.is-dragging td * { pointer-events: none; }
+    .th--handle { width: 28px; }
+    .table__drag-handle { width: 28px; padding: 0 var(--space-2); text-align: center; cursor: grab; color: var(--color-text-tertiary); user-select: none; }
+    .table__drag-handle:active { cursor: grabbing; }
+    .drag-icon { display: block; margin: 0 auto; }
     .table__name { font-weight: var(--font-weight-medium); }
     .table__cats { color: var(--color-text-secondary); font-size: var(--font-size-xs); }
     .table__actions { display: flex; gap: var(--space-2); }
@@ -213,6 +240,9 @@ export class AdminExtrasComponent implements OnInit {
   mode = signal<FormMode>('create');
   saving = signal(false);
   saveError = signal<string | null>(null);
+  reordering = signal(false);
+  protected dragIndex = signal<number | null>(null);
+  protected dragOverIndex = signal<number | null>(null);
   private editingId = signal<string | null>(null);
 
   form = this.fb.group({
@@ -313,5 +343,51 @@ export class AdminExtrasComponent implements OnInit {
       next: () => this.load(),
       error: () => alert('Verwijderen mislukt.'),
     });
+  }
+
+  onDragStart(event: DragEvent, index: number): void {
+    this.dragIndex.set(index);
+    event.dataTransfer!.effectAllowed = 'move';
+    event.dataTransfer!.setData('text/plain', String(index));
+  }
+
+  onDragOver(event: DragEvent, index: number): void {
+    event.preventDefault();
+    event.dataTransfer!.dropEffect = 'move';
+    this.dragOverIndex.set(index);
+  }
+
+  onDragLeave(event: DragEvent): void {
+    const related = event.relatedTarget as Node | null;
+    if (!related || !(event.currentTarget as Element).contains(related)) {
+      this.dragOverIndex.set(null);
+    }
+  }
+
+  onDrop(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    const fromIndex = this.dragIndex();
+    this.dragIndex.set(null);
+    this.dragOverIndex.set(null);
+    if (fromIndex === null || fromIndex === targetIndex) return;
+
+    const updated = [...this.extras()];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(targetIndex, 0, moved);
+    this.extras.set(updated);
+
+    this.reordering.set(true);
+    this.extrasService.reorder(updated.map((e) => e.id)).subscribe({
+      next: () => this.reordering.set(false),
+      error: () => {
+        this.reordering.set(false);
+        this.load();
+      },
+    });
+  }
+
+  onDragEnd(): void {
+    this.dragIndex.set(null);
+    this.dragOverIndex.set(null);
   }
 }

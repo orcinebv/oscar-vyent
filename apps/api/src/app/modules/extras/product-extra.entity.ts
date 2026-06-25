@@ -22,6 +22,9 @@ export class ProductExtra {
   @Column({ type: 'simple-array', nullable: true, name: 'default_for_categories' })
   defaultForCategories!: string[];
 
+  @Column({ type: 'int', default: 0, name: 'sort_order' })
+  sortOrder!: number;
+
   @CreateDateColumn()
   createdAt!: Date;
 
