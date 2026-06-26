@@ -32,6 +32,7 @@ export class MailService {
       secure: secure === 'ssl',
       requireTLS: secure === 'starttls',
       auth: user ? { user, pass } : undefined,
+      tls: { rejectUnauthorized: false },
     });
 
     return { transporter, from, to };
