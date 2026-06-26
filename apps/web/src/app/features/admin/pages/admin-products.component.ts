@@ -36,6 +36,7 @@ type FormMode = 'create' | 'edit';
                 <th>Prijs</th>
                 <th>Voorraad</th>
                 <th>Actief</th>
+                <th>Uitverkocht</th>
                 <th>Acties</th>
               </tr>
             </thead>
@@ -73,6 +74,15 @@ type FormMode = 'create' | 'edit';
                       {{ product.isActive ? 'Ja' : 'Nee' }}
                     </span>
                   </td>
+                  <td>
+                    <button class="btn btn--sm"
+                      [class.btn--sold-out]="product.isSoldOut"
+                      [class.btn--ghost]="!product.isSoldOut"
+                      (click)="toggleSoldOut(product)"
+                      [title]="product.isSoldOut ? 'Markeer als beschikbaar' : 'Markeer als uitverkocht'">
+                      {{ product.isSoldOut ? 'Uitverkocht' : 'Beschikbaar' }}
+                    </button>
+                  </td>
                   <td class="table__actions">
                     <button class="btn btn--sm btn--ghost" (click)="openEdit(product)">Bewerken</button>
                     <button class="btn btn--sm btn--danger" (click)="deleteProduct(product)">Verwijderen</button>
@@ -80,7 +90,7 @@ type FormMode = 'create' | 'edit';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="8" class="table__empty">Geen producten gevonden.</td>
+                  <td colspan="9" class="table__empty">Geen producten gevonden.</td>
                 </tr>
               }
             </tbody>
@@ -169,6 +179,13 @@ type FormMode = 'create' | 'edit';
               <label class="field__checkbox-label">
                 <input type="checkbox" formControlName="isActive" />
                 Actief (zichtbaar in winkel)
+              </label>
+            </div>
+
+            <div class="field field--checkbox">
+              <label class="field__checkbox-label">
+                <input type="checkbox" formControlName="isSoldOut" />
+                Uitverkocht (bestellen niet mogelijk)
               </label>
             </div>
 
@@ -375,6 +392,13 @@ type FormMode = 'create' | 'edit';
     }
     .btn--danger:hover { background: #fecaca; }
 
+    .btn--sold-out {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+    .btn--sold-out:hover { background: #fde68a; }
+
     .btn--sm { padding: var(--space-1) var(--space-3); font-size: 12px; }
 
     .modal-backdrop {
@@ -576,6 +600,7 @@ export class AdminProductsComponent implements OnInit {
     category: [''],
     imageUrl: [''],
     isActive: [true],
+    isSoldOut: [false],
   });
 
   ngOnInit(): void {
@@ -601,7 +626,7 @@ export class AdminProductsComponent implements OnInit {
   openCreate(): void {
     this.mode.set('create');
     this.editingId.set(null);
-    this.form.reset({ isActive: true, stock: 0, price: null, imageUrl: '' });
+    this.form.reset({ isActive: true, isSoldOut: false, stock: 0, price: null, imageUrl: '' });
     this.selectedExtraIds.set([]);
     this.saveError.set(null);
     this.imagePreview.set(null);
@@ -621,6 +646,7 @@ export class AdminProductsComponent implements OnInit {
       category: product.category ?? '',
       imageUrl: product.imageUrl ?? '',
       isActive: product.isActive,
+      isSoldOut: product.isSoldOut ?? false,
     });
     this.selectedExtraIds.set((product.extras ?? []).map((e) => e.id));
     this.saveError.set(null);
@@ -690,6 +716,7 @@ export class AdminProductsComponent implements OnInit {
           imageUrl: url || null,
           category: raw.category || null,
           isActive: raw.isActive ?? true,
+          isSoldOut: raw.isSoldOut ?? false,
         };
         return this.mode() === 'create'
           ? this.productsService.create(dto)
@@ -710,6 +737,13 @@ export class AdminProductsComponent implements OnInit {
         const msg = httpErr?.error?.message;
         this.saveError.set(Array.isArray(msg) ? msg.join(', ') : (msg ?? 'Er is een fout opgetreden.'));
       },
+    });
+  }
+
+  toggleSoldOut(product: ProductDto): void {
+    this.productsService.update(product.id, { isSoldOut: !product.isSoldOut }).subscribe({
+      next: () => this.load(),
+      error: () => alert('Bijwerken mislukt.'),
     });
   }
 

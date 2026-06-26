@@ -99,6 +99,7 @@ export class CartService {
       stock: combo.stock,
       imageUrl: combo.imageUrl,
       isActive: combo.isActive,
+      isSoldOut: false,
       category: combo.category,
       extras: [],
       createdAt: combo.createdAt,

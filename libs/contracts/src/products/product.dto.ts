@@ -17,6 +17,7 @@ export interface ProductDto {
   stock: number;
   imageUrl: string | null;
   isActive: boolean;
+  isSoldOut: boolean;
   category: string | null;
   sortOrder?: number;
   extras: ProductExtraDto[];

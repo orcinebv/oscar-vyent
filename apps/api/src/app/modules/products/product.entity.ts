@@ -32,6 +32,9 @@ export class Product {
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
+  @Column({ type: 'boolean', default: false, name: 'is_sold_out' })
+  isSoldOut!: boolean;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   category!: string | null;
 

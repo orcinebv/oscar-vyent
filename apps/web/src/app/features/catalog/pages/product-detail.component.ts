@@ -45,7 +45,7 @@ import { FormsModule } from '@angular/forms';
             <h1 class="detail__name">{{ p.name }}</h1>
             <p class="detail__price">{{ p.price | currency:'EUR':'symbol':'1.2-2':'nl' }}</p>
 
-            @if (p.stock === 0) {
+            @if (p.isSoldOut || p.stock === 0) {
               <div class="alert alert-error">Dit product is uitverkocht.</div>
             } @else if (p.stock <= 10) {
               <p class="detail__low-stock">⚠ Nog slechts {{ p.stock }} stuks op voorraad!</p>
@@ -73,7 +73,7 @@ import { FormsModule } from '@angular/forms';
               <button
                 type="button"
                 class="btn btn-primary btn-lg"
-                [disabled]="p.stock === 0"
+                [disabled]="p.isSoldOut || p.stock === 0"
                 (click)="onAddToCart(p)"
               >
                 In winkelwagen

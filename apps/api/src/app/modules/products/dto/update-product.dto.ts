@@ -45,6 +45,10 @@ export class UpdateProductDto {
   isActive?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  isSoldOut?: boolean;
+
+  @IsOptional()
   @IsString()
   @MaxLength(100)
   category?: string;
