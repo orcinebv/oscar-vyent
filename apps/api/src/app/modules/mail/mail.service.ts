@@ -51,15 +51,18 @@ export class MailService {
     const { transporter, from, to } = await this.buildTransporter();
 
     const itemRows = order.items
-      .map(
-        (i) =>
-          `<tr>
-            <td style="padding:6px 12px;border-bottom:1px solid #eee">${i.productName}</td>
+      .map((i) => {
+        const extras =
+          i.selectedExtras?.length
+            ? `<div style="font-size:12px;color:#666;margin-top:3px">Wensen: ${i.selectedExtras.join(', ')}</div>`
+            : '';
+        return `<tr>
+            <td style="padding:6px 12px;border-bottom:1px solid #eee">${i.productName}${extras}</td>
             <td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:center">${i.quantity}×</td>
             <td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right">€${Number(i.unitPrice).toFixed(2)}</td>
             <td style="padding:6px 12px;border-bottom:1px solid #eee;text-align:right">€${Number(i.totalPrice).toFixed(2)}</td>
-          </tr>`,
-      )
+          </tr>`;
+      })
       .join('');
 
     const date = new Date(order.createdAt).toLocaleString('nl-NL', {
