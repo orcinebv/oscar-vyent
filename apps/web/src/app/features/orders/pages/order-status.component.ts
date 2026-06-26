@@ -65,7 +65,12 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
                 @for (item of o.items; track item.id) {
                   <li class="order-item">
                     <div class="order-item__info">
-                      <span class="order-item__name">{{ item.productName }}</span>
+                      <div class="order-item__name-wrap">
+                        <span class="order-item__name">{{ item.productName }}</span>
+                        @if (item.selectedExtras?.length) {
+                          <span class="order-item__extras">Wensen: {{ item.selectedExtras!.join(', ') }}</span>
+                        }
+                      </div>
                       <span class="order-item__qty">× {{ item.quantity }}</span>
                     </div>
                     <span class="order-item__price">{{ item.totalPrice | currency:'EUR':'symbol':'1.2-2':'nl' }}</span>
@@ -139,7 +144,9 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
     .order-items { display: flex; flex-direction: column; gap: var(--space-3); }
     .order-item { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--font-size-sm); }
     .order-item__info { display: flex; gap: var(--space-2); flex: 1; }
+    .order-item__name-wrap { display: flex; flex-direction: column; gap: 2px; }
     .order-item__name { color: var(--color-text-primary); }
+    .order-item__extras { font-size: var(--font-size-xs); color: var(--color-text-muted); font-style: italic; }
     .order-item__qty { color: var(--color-text-muted); }
     .order-item__price { font-weight: var(--font-weight-medium); }
     .order-total { display: flex; justify-content: space-between; font-size: var(--font-size-lg); }
