@@ -8,34 +8,46 @@ import { Order } from '../orders/order.entity';
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private readonly transporter: nodemailer.Transporter;
-  private readonly defaultTo: string;
-  private readonly from: string;
 
   constructor(
     private readonly config: ConfigService<AppConfig>,
     private readonly settingsService: SettingsService,
-  ) {
-    const mail = config.get('mail', { infer: true })!;
-    this.defaultTo = mail.to;
-    this.from = mail.from;
+  ) {}
 
-    this.transporter = nodemailer.createTransport({
-      host: mail.host,
-      port: mail.port,
-      secure: mail.port === 465,
-      auth: mail.user ? { user: mail.user, pass: mail.pass } : undefined,
+  private async buildTransporter(): Promise<{ transporter: nodemailer.Transporter; from: string; to: string }> {
+    const envMail = this.config.get('mail', { infer: true })!;
+    const s = await this.settingsService.getAll();
+
+    const host   = s['mail.smtp.host']   || envMail.host;
+    const port   = parseInt(s['mail.smtp.port']   || String(envMail.port), 10);
+    const secure = s['mail.smtp.secure'] || (envMail.port === 465 ? 'ssl' : 'starttls');
+    const user   = s['mail.smtp.user']   || envMail.user;
+    const pass   = s['mail.smtp.pass']   || envMail.pass;
+    const from   = s['mail.smtp.from']   || envMail.from;
+    const to     = s['mail.to']          || envMail.to;
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: secure === 'ssl',
+      requireTLS: secure === 'starttls',
+      auth: user ? { user, pass } : undefined,
     });
+
+    return { transporter, from, to };
   }
 
   async sendOrderNotification(order: Order): Promise<void> {
-    if (!this.config.get('mail', { infer: true })!.user) {
-      this.logger.warn('MAIL_USER niet ingesteld — e-mail overgeslagen');
+    const envMail = this.config.get('mail', { infer: true })!;
+    const s = await this.settingsService.getAll();
+    const user = s['mail.smtp.user'] || envMail.user;
+
+    if (!user) {
+      this.logger.warn('SMTP gebruikersnaam niet ingesteld — e-mail overgeslagen');
       return;
     }
 
-    const mailToFromDb = await this.settingsService.get('mail.to');
-    const to = mailToFromDb ?? this.defaultTo;
+    const { transporter, from, to } = await this.buildTransporter();
 
     const itemRows = order.items
       .map(
@@ -93,8 +105,8 @@ export class MailService {
     `;
 
     try {
-      await this.transporter.sendMail({
-        from: this.from,
+      await transporter.sendMail({
+        from,
         to,
         subject: `Nieuwe bestelling #${order.orderNumber ?? order.id.slice(0, 8)} — €${Number(order.totalAmount).toFixed(2)}`,
         html,
@@ -103,5 +115,29 @@ export class MailService {
     } catch (err) {
       this.logger.error(`E-mail versturen mislukt: ${String(err)}`);
     }
+  }
+
+  async sendTest(recipientOverride?: string): Promise<void> {
+    const { transporter, from, to } = await this.buildTransporter();
+    const recipient = recipientOverride || to;
+
+    await transporter.sendMail({
+      from,
+      to: recipient,
+      subject: 'Testmail — Oscar Vyent mailconfiguratie',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333">
+          <div style="background:#c0392b;padding:20px 24px;border-radius:8px 8px 0 0">
+            <h1 style="margin:0;color:#fff;font-size:20px">Testmail</h1>
+          </div>
+          <div style="padding:24px;background:#fff;border:1px solid #eee;border-top:none;border-radius:0 0 8px 8px">
+            <p>De SMTP-configuratie werkt correct. Bestellingen worden verstuurd naar <strong>${to}</strong>.</p>
+            <p style="color:#888;font-size:12px;margin-top:24px">Verstuurd via Oscar Vyent beheerpaneel</p>
+          </div>
+        </div>
+      `,
+    });
+
+    this.logger.log(`Testmail verstuurd naar ${recipient}`);
   }
 }

@@ -22,4 +22,8 @@ export class AdminSettingsService {
       { startAt },
     );
   }
+
+  testMail(): Observable<{ ok: boolean }> {
+    return this.http.post<{ ok: boolean }>(`${this.base}/mail/test`, {});
+  }
 }

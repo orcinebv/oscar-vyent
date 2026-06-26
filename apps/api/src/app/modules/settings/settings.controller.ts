@@ -8,7 +8,10 @@ export class SettingsController {
 
   @Get()
   async getAll(): Promise<Record<string, string>> {
-    return this.settingsService.getAll();
+    const all = await this.settingsService.getAll();
+    // Never expose the SMTP password to the frontend
+    const { 'mail.smtp.pass': _pass, ...safe } = all;
+    return safe;
   }
 
   @Patch()
