@@ -8,8 +8,8 @@ import { ProductDto } from '@oscar-vyent/contracts';
   standalone: true,
   imports: [RouterLink, CurrencyPipe],
   template: `
-    <article class="product-card" [class.product-card--out-of-stock]="product.stock === 0">
-      <a [routerLink]="['/products', product.id]" class="product-card__image-link" [attr.tabindex]="product.stock === 0 ? -1 : 0">
+    <article class="product-card" [class.product-card--out-of-stock]="product.isSoldOut || product.stock === 0">
+      <a [routerLink]="['/products', product.id]" class="product-card__image-link" [attr.tabindex]="(product.isSoldOut || product.stock === 0) ? -1 : 0">
         <div class="product-card__image-wrap">
           @if (product.imageUrl) {
             <img
@@ -28,8 +28,8 @@ import { ProductDto } from '@oscar-vyent/contracts';
               </svg>
             </div>
           }
-          @if (product.stock === 0) {
-            <div class="product-card__stock-overlay">Uitverkocht</div>
+          @if (product.isSoldOut || product.stock === 0) {
+            <span class="product-card__sold-out-badge">Uitverkocht</span>
           }
           @if (product.category) {
             <span class="product-card__category">{{ product.category }}</span>
@@ -46,11 +46,8 @@ import { ProductDto } from '@oscar-vyent/contracts';
         <div class="product-card__footer">
           <div class="product-card__price-wrap">
             <span class="product-card__price">{{ product.price | currency:'EUR':'symbol':'1.2-2':'nl' }}</span>
-            @if (product.stock > 0 && product.stock <= 10) {
+            @if (!(product.isSoldOut || product.stock === 0) && product.stock <= 10) {
               <span class="product-card__low-stock">Nog {{ product.stock }} op voorraad</span>
-            }
-            @if (product.stock === 0) {
-              <span class="product-card__low-stock">Uitverkocht</span>
             }
           </div>
         </div>
@@ -99,16 +96,18 @@ import { ProductDto } from '@oscar-vyent/contracts';
       color: var(--color-text-muted);
     }
 
-    .product-card__stock-overlay {
+    .product-card__sold-out-badge {
       position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
+      top: var(--space-2);
+      right: var(--space-2);
+      background: #dc2626;
       color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--font-size-lg);
+      font-size: 11px;
+      font-weight: var(--font-weight-bold);
+      padding: 3px var(--space-2);
+      border-radius: var(--radius-full);
+      letter-spacing: 0.02em;
+      pointer-events: none;
     }
 
     .product-card__category {
