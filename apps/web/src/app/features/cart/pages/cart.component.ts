@@ -42,6 +42,9 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
                           {{ slot.productName }}@if (slot.selectedExtras.length) {<span class="cart-item__slot-extras"> · {{ slot.selectedExtras.join(', ') }}</span>}
                         </span>
                       }
+                      @if (item.comboExtras?.length) {
+                        <span class="cart-item__slot cart-item__slot--wishes">Wensen: {{ item.comboExtras!.join(', ') }}</span>
+                      }
                     </div>
                   } @else if (item.selectedExtras.length) {
                     <p class="cart-item__extras">{{ item.selectedExtras.join(', ') }}</p>
@@ -127,6 +130,7 @@ import { CheckoutStepsComponent } from '../../../shared/components/checkout-step
     .cart-item__slots { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
     .cart-item__slot { font-size: var(--font-size-xs); color: var(--color-text-secondary); }
     .cart-item__slot-extras { font-style: italic; }
+    .cart-item__slot--wishes { font-style: italic; color: var(--color-text-muted); }
     .cart-item__unit-price { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-1); }
 
     .cart-item__qty { display: flex; align-items: center; gap: var(--space-2); }

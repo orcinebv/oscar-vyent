@@ -61,6 +61,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                           {{ slot.productName }}@if (slot.selectedExtras.length) { · {{ slot.selectedExtras.join(', ') }}}
                         </span>
                       }
+                      @if (item.comboExtras?.length) {
+                        <span class="summary-item__extras summary-item__extras--wishes">Wensen: {{ item.comboExtras!.join(', ') }}</span>
+                      }
                     } @else if (item.selectedExtras.length) {
                       <span class="summary-item__extras">{{ item.selectedExtras.join(', ') }}</span>
                     }
@@ -179,13 +182,16 @@ export class CheckoutComponent implements OnInit {
             comboId: i.comboId,
             itemType: 'combo' as const,
             quantity: i.quantity,
-            selectedExtras: i.selectedComboSlots
-              ? i.selectedComboSlots.flatMap(s =>
-                  s.selectedExtras.length
-                    ? [`${s.productName}: ${s.selectedExtras.join(', ')}`]
-                    : [s.productName]
-                )
-              : i.selectedComboItems,
+            selectedExtras: [
+              ...(i.selectedComboSlots
+                ? i.selectedComboSlots.flatMap(s =>
+                    s.selectedExtras.length
+                      ? [`${s.productName}: ${s.selectedExtras.join(', ')}`]
+                      : [s.productName]
+                  )
+                : (i.selectedComboItems ?? [])),
+              ...(i.comboExtras ?? []),
+            ],
           }
         : {
             productId: i.product.id,

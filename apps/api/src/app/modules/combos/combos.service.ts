@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, In } from 'typeorm';
 import { ProductCombo } from './product-combo.entity';
 import { Product } from '../products/product.entity';
+import { ProductExtra } from '../extras/product-extra.entity';
 import { CreateProductComboDto } from './dto/create-product-combo.dto';
 import { UpdateProductComboDto } from './dto/update-product-combo.dto';
 
@@ -20,12 +21,14 @@ export class CombosService {
     private readonly comboRepo: Repository<ProductCombo>,
     @InjectRepository(Product)
     private readonly productRepo: Repository<Product>,
+    @InjectRepository(ProductExtra)
+    private readonly extrasRepo: Repository<ProductExtra>,
   ) {}
 
   async findAll(includeInactive = false): Promise<ProductCombo[]> {
     return this.comboRepo.find({
       where: includeInactive ? undefined : { isActive: true },
-      relations: ['products', 'products.extras'],
+      relations: ['products', 'products.extras', 'extras'],
       order: { sortOrder: 'ASC', createdAt: 'ASC' },
     });
   }
@@ -37,7 +40,7 @@ export class CombosService {
   async findOne(id: string): Promise<ProductCombo> {
     const combo = await this.comboRepo.findOne({
       where: { id, isActive: true },
-      relations: ['products', 'products.extras'],
+      relations: ['products', 'products.extras', 'extras'],
     });
     if (!combo) throw new NotFoundException(`Combo ${id} not found`);
     return combo;
@@ -57,17 +60,25 @@ export class CombosService {
     combo.products = dto.productIds?.length
       ? await this.productRepo.findBy({ id: In(dto.productIds) })
       : [];
+    combo.extras = dto.extraIds?.length
+      ? await this.extrasRepo.findBy({ id: In(dto.extraIds) })
+      : [];
     return this.comboRepo.save(combo);
   }
 
   async update(id: string, dto: UpdateProductComboDto): Promise<ProductCombo> {
-    const combo = await this.comboRepo.findOne({ where: { id }, relations: ['products'] });
+    const combo = await this.comboRepo.findOne({ where: { id }, relations: ['products', 'extras'] });
     if (!combo) throw new NotFoundException(`Combo ${id} not found`);
-    const { productIds, ...fields } = dto;
+    const { productIds, extraIds, ...fields } = dto;
     Object.assign(combo, fields);
     if (productIds !== undefined) {
       combo.products = productIds.length > 0
         ? await this.productRepo.findBy({ id: In(productIds) })
+        : [];
+    }
+    if (extraIds !== undefined) {
+      combo.extras = extraIds.length > 0
+        ? await this.extrasRepo.findBy({ id: In(extraIds) })
         : [];
     }
     return this.comboRepo.save(combo);

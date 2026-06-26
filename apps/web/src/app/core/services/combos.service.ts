@@ -22,11 +22,11 @@ export class CombosService {
     return this.http.get<ProductComboDto>(`${this.base}/${id}`);
   }
 
-  create(dto: Partial<ProductComboDto> & { productIds?: string[] }): Observable<ProductComboDto> {
+  create(dto: Partial<ProductComboDto> & { productIds?: string[]; extraIds?: string[] }): Observable<ProductComboDto> {
     return this.http.post<ProductComboDto>(this.base, dto);
   }
 
-  update(id: string, dto: Partial<ProductComboDto> & { productIds?: string[] }): Observable<ProductComboDto> {
+  update(id: string, dto: Partial<ProductComboDto> & { productIds?: string[]; extraIds?: string[] }): Observable<ProductComboDto> {
     return this.http.patch<ProductComboDto>(`${this.base}/${id}`, dto);
   }
 

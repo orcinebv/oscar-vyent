@@ -18,6 +18,8 @@ export interface CartItem {
   selectedComboItems?: string[];
   /** For combo items: full per-product slot selections including extras */
   selectedComboSlots?: ComboSlotSelection[];
+  /** For combo items: combo-level wishes/extras selected by the customer */
+  comboExtras?: string[];
 }
 
 const STORAGE_KEY = 'oscar_vyent_cart';
@@ -83,11 +85,11 @@ export class CartService {
     });
   }
 
-  addCombo(combo: ProductComboDto, slots: ComboSlotSelection[], quantity = 1): void {
+  addCombo(combo: ProductComboDto, slots: ComboSlotSelection[], quantity = 1, comboExtras: string[] = []): void {
     const lineId = `combo:${combo.id}:${slots
       .map(s => `${s.productId}[${[...s.selectedExtras].sort().join(',')}]`)
       .sort()
-      .join('+')}`;
+      .join('+')}|extras:${[...comboExtras].sort().join(',')}`;
     const selectedComboItems = slots.map(s => s.productName);
     const product: ProductDto = {
       id: combo.id,
@@ -118,6 +120,7 @@ export class CartService {
         comboId: combo.id,
         selectedComboItems,
         selectedComboSlots: slots,
+        comboExtras: comboExtras.length ? comboExtras : undefined,
       }];
     });
   }

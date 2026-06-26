@@ -83,6 +83,22 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
                 }
               </div>
 
+              @if (c.extras?.length) {
+                <div class="combo-picker">
+                  <p class="combo-picker__title">Wensen / extras <span class="combo-picker__count">(optioneel)</span></p>
+                  <div class="extras-list">
+                    @for (extra of c.extras; track extra.id) {
+                      <label class="extras-list__item">
+                        <input type="checkbox"
+                               [checked]="selectedExtras().includes(extra.name)"
+                               (change)="toggleExtra(extra.name)" />
+                        {{ extra.name }}
+                      </label>
+                    }
+                  </div>
+                </div>
+              }
+
               <div class="detail__actions">
                 <button
                   type="button"
@@ -166,6 +182,10 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
     .stepper__btn:disabled { opacity: 0.35; cursor: not-allowed; }
     .stepper__btn:not(:disabled):hover { background: var(--color-surface-subtle); }
     .stepper__value { min-width: 20px; text-align: center; font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); }
+
+    .extras-list { display: flex; flex-direction: column; gap: var(--space-2); margin-top: var(--space-2); }
+    .extras-list__item { display: flex; align-items: center; gap: var(--space-2); font-size: var(--font-size-sm); cursor: pointer; }
+    .extras-list__item input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--color-primary); }
   `],
 })
 export class ComboDetailComponent implements OnInit {
@@ -179,6 +199,7 @@ export class ComboDetailComponent implements OnInit {
   protected readonly error = signal<string | null>(null);
   protected readonly slotQuantities = signal<Record<string, number>>({});
   protected readonly selectionError = signal<string | null>(null);
+  protected readonly selectedExtras = signal<string[]>([]);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
@@ -216,6 +237,12 @@ export class ComboDetailComponent implements OnInit {
     });
   }
 
+  protected toggleExtra(name: string): void {
+    this.selectedExtras.update((extras) =>
+      extras.includes(name) ? extras.filter((e) => e !== name) : [...extras, name]
+    );
+  }
+
   protected onAddToCart(combo: ProductComboDto): void {
     if (this.slotTotal() !== combo.slotCount) return;
     const slots: ComboSlotSelection[] = [];
@@ -225,12 +252,13 @@ export class ComboDetailComponent implements OnInit {
         slots.push({ productId: product.id, productName: product.name, selectedExtras: [] });
       }
     }
-    this.cartService.addCombo(combo, slots);
+    this.cartService.addCombo(combo, slots, 1, this.selectedExtras());
     const names = Object.entries(this.slotQuantities()).map(([id, qty]) => {
       const p = combo.products.find(p => p.id === id)!;
       return qty > 1 ? `${qty}× ${p.name}` : p.name;
     });
     this.toast.success(`"${combo.name}" (${names.join(' + ')}) toegevoegd aan winkelwagen.`);
     this.slotQuantities.set({});
+    this.selectedExtras.set([]);
   }
 }

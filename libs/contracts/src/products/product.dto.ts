@@ -41,6 +41,7 @@ export interface ProductComboDto {
   slotCount: number;
   sortOrder?: number;
   products: ProductDto[];
+  extras: ProductExtraDto[];
   createdAt: string;
   updatedAt: string;
 }

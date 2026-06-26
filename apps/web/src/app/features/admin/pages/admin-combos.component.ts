@@ -1,9 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { switchMap, of } from 'rxjs';
-import { ProductComboDto, ProductDto } from '@oscar-vyent/contracts';
+import { ProductComboDto, ProductDto, ProductExtraDto } from '@oscar-vyent/contracts';
 import { CombosService } from '../../../core/services/combos.service';
 import { ProductsService } from '../../../core/services/products.service';
+import { ExtrasService } from '../../../core/services/extras.service';
 import { UploadService } from '../../../core/services/upload.service';
 
 type FormMode = 'create' | 'edit';
@@ -199,6 +200,23 @@ type FormMode = 'create' | 'edit';
               </div>
             </div>
 
+            <div class="field">
+              <label class="field__label">Wensen / extras bij deze combinatie</label>
+              <span class="field__hint">De klant kan deze wensen optioneel aanvinken.</span>
+              <div class="products-list">
+                @for (extra of allExtras(); track extra.id) {
+                  <label class="field__checkbox-label">
+                    <input type="checkbox"
+                           [checked]="selectedExtraIds().includes(extra.id)"
+                           (change)="toggleExtra(extra.id)" />
+                    {{ extra.name }}
+                  </label>
+                } @empty {
+                  <p class="field__hint">Geen extras beschikbaar. Voeg eerst extras toe via het extras-beheer.</p>
+                }
+              </div>
+            </div>
+
             @if (saveError()) {
               <p class="field__error field__error--block">{{ saveError() }}</p>
             }
@@ -288,12 +306,15 @@ type FormMode = 'create' | 'edit';
 export class AdminCombosComponent implements OnInit {
   private readonly combosService = inject(CombosService);
   private readonly productsService = inject(ProductsService);
+  private readonly extrasService = inject(ExtrasService);
   private readonly uploadService = inject(UploadService);
   private readonly fb = inject(FormBuilder);
 
   combos = signal<ProductComboDto[]>([]);
   allProducts = signal<ProductDto[]>([]);
+  allExtras = signal<ProductExtraDto[]>([]);
   selectedProductIds = signal<string[]>([]);
+  selectedExtraIds = signal<string[]>([]);
   categories = computed(() =>
     [...new Set(this.allProducts().map((p) => p.category).filter((c): c is string => c !== null))].sort()
   );
@@ -324,6 +345,7 @@ export class AdminCombosComponent implements OnInit {
   ngOnInit(): void {
     this.load();
     this.productsService.getAllAdmin().subscribe((products) => this.allProducts.set(products));
+    this.extrasService.getAll().subscribe((extras) => this.allExtras.set(extras));
   }
 
   formatPrice(price: number): string {
@@ -343,6 +365,7 @@ export class AdminCombosComponent implements OnInit {
     this.editingId.set(null);
     this.form.reset({ isActive: true, stock: 0, price: null, slotCount: 2, imageUrl: '' });
     this.selectedProductIds.set([]);
+    this.selectedExtraIds.set([]);
     this.saveError.set(null);
     this.imagePreview.set(null);
     this.pendingFile.set(null);
@@ -364,6 +387,7 @@ export class AdminCombosComponent implements OnInit {
       isActive: combo.isActive,
     });
     this.selectedProductIds.set((combo.products ?? []).map((p) => p.id));
+    this.selectedExtraIds.set((combo.extras ?? []).map((e) => e.id));
     this.saveError.set(null);
     this.imagePreview.set(combo.imageUrl ?? null);
     this.pendingFile.set(null);
@@ -391,6 +415,12 @@ export class AdminCombosComponent implements OnInit {
   toggleProduct(productId: string): void {
     this.selectedProductIds.update((ids) =>
       ids.includes(productId) ? ids.filter((id) => id !== productId) : [...ids, productId],
+    );
+  }
+
+  toggleExtra(extraId: string): void {
+    this.selectedExtraIds.update((ids) =>
+      ids.includes(extraId) ? ids.filter((id) => id !== extraId) : [...ids, extraId],
     );
   }
 
@@ -423,6 +453,7 @@ export class AdminCombosComponent implements OnInit {
           category: raw.category || null,
           isActive: raw.isActive ?? true,
           productIds: this.selectedProductIds(),
+          extraIds: this.selectedExtraIds(),
         };
         return this.mode() === 'create'
           ? this.combosService.create(dto)

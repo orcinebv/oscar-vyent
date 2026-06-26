@@ -8,6 +8,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { Product } from '../products/product.entity';
+import { ProductExtra } from '../extras/product-extra.entity';
 
 @Entity('product_combos')
 export class ProductCombo {
@@ -49,6 +50,14 @@ export class ProductCombo {
     inverseJoinColumn: { name: 'product_id' },
   })
   products!: Product[];
+
+  @ManyToMany(() => ProductExtra, { eager: false })
+  @JoinTable({
+    name: 'product_combo_extras',
+    joinColumn: { name: 'combo_id' },
+    inverseJoinColumn: { name: 'extra_id' },
+  })
+  extras!: ProductExtra[];
 
   @CreateDateColumn()
   createdAt!: Date;
