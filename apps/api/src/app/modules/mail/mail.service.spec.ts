@@ -27,7 +27,7 @@ const makeConfig = (mailUser = 'sender@example.nl') => ({
 });
 
 const mockSettingsService = {
-  get: jest.fn(),
+  getAll: jest.fn(),
 };
 
 const mockOrder: Partial<Order> = {
@@ -60,6 +60,7 @@ describe('MailService', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     (nodemailer.createTransport as jest.Mock).mockReturnValue(mockTransporter);
+    mockSettingsService.getAll.mockResolvedValue({});
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -74,7 +75,10 @@ describe('MailService', () => {
 
   describe('sendOrderNotification()', () => {
     it('sends email to recipient stored in database', async () => {
-      mockSettingsService.get.mockResolvedValue('admin@company.nl');
+      mockSettingsService.getAll.mockResolvedValue({
+        'mail.to': 'admin@company.nl',
+        'mail.smtp.user': 'sender@example.nl',
+      });
       mockSendMail.mockResolvedValue({});
 
       await service.sendOrderNotification(mockOrder as Order);
@@ -85,7 +89,9 @@ describe('MailService', () => {
     });
 
     it('falls back to config default when no DB recipient is set', async () => {
-      mockSettingsService.get.mockResolvedValue(null);
+      mockSettingsService.getAll.mockResolvedValue({
+        'mail.smtp.user': 'sender@example.nl',
+      });
       mockSendMail.mockResolvedValue({});
 
       await service.sendOrderNotification(mockOrder as Order);
@@ -96,7 +102,7 @@ describe('MailService', () => {
     });
 
     it('skips sending when MAIL_USER is not configured', async () => {
-      (nodemailer.createTransport as jest.Mock).mockReturnValue(mockTransporter);
+      mockSettingsService.getAll.mockResolvedValue({});
 
       const module: TestingModule = await Test.createTestingModule({
         providers: [
@@ -113,7 +119,9 @@ describe('MailService', () => {
     });
 
     it('does not throw when the SMTP transport fails', async () => {
-      mockSettingsService.get.mockResolvedValue(null);
+      mockSettingsService.getAll.mockResolvedValue({
+        'mail.smtp.user': 'sender@example.nl',
+      });
       mockSendMail.mockRejectedValue(new Error('SMTP connection refused'));
 
       await expect(
@@ -122,7 +130,9 @@ describe('MailService', () => {
     });
 
     it('includes order number and total amount in the email subject', async () => {
-      mockSettingsService.get.mockResolvedValue(null);
+      mockSettingsService.getAll.mockResolvedValue({
+        'mail.smtp.user': 'sender@example.nl',
+      });
       mockSendMail.mockResolvedValue({});
 
       await service.sendOrderNotification(mockOrder as Order);
@@ -140,7 +150,9 @@ describe('MailService', () => {
     });
 
     it('uses the from address from config', async () => {
-      mockSettingsService.get.mockResolvedValue(null);
+      mockSettingsService.getAll.mockResolvedValue({
+        'mail.smtp.user': 'sender@example.nl',
+      });
       mockSendMail.mockResolvedValue({});
 
       await service.sendOrderNotification(mockOrder as Order);
